@@ -52,6 +52,7 @@ function cargoBuild({ profile, features, rustFlags }) {
     if (process.env["CARGO_FLAGS"]) {
         args = args.concat(process.env["CARGO_FLAGS"].split(" "));
     }
+    console.log(`Total RUSTFLAGS: ${totalRustFlags}`);
     execFileSync("cargo", args, {
         env: Object.assign(Object.assign({}, process.env), {
             RUSTFLAGS: totalRustFlags,
