@@ -11,7 +11,7 @@ pub struct WStr {
 }
 
 #[cold]
-pub(super) fn panic_on_invalid_length(len: usize) -> ! {
+pub fn panic_on_invalid_length(len: usize) -> ! {
     panic!("Too many code units in Ruffle string (len = {})", len)
 }
 
@@ -344,6 +344,18 @@ impl WStr {
     #[inline]
     pub fn make_ascii_lowercase(&mut self) {
         super::ops::str_make_ascii_lowercase(self)
+    }
+
+    /// Returns a new string with all ASCII characters mapped to their uppercase equivalent.
+    #[inline]
+    pub fn to_ascii_uppercase(&self) -> WString {
+        super::ops::str_to_ascii_uppercase(self)
+    }
+
+    /// Converts this string to its ASCII uppercase equivalent in-place.
+    #[inline]
+    pub fn make_ascii_uppercase(&mut self) {
+        super::ops::str_make_ascii_uppercase(self)
     }
 
     /// Analogue of [`str::replace`].

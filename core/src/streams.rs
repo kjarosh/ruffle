@@ -16,7 +16,7 @@ use crate::backend::audio::{
 use crate::backend::navigator::Request;
 use crate::buffer::{Buffer, Slice, Substream, SubstreamError};
 use crate::context::UpdateContext;
-use crate::display_object::MovieClip;
+use crate::display_object::{MovieClip, TDisplayObject};
 use crate::loader::Error;
 use crate::string::AvmString;
 use crate::vminterface::AvmObject;
@@ -218,6 +218,10 @@ pub struct NetStreamData<'gc> {
     /// Seeks are only executed on the next stream tick.
     queued_seek_time: Option<f64>,
 
+    /// The number of seconds of video data that should be buffered. This is
+    /// currently unsupported and changing it has no effect.
+    buffer_time: f64,
+
     /// The last decoded bitmap.
     ///
     /// Any `Video`s on the stage will display the bitmap here when attached to
@@ -263,6 +267,7 @@ impl<'gc> NetStream<'gc> {
                 stream_type: None,
                 stream_time: 0.0,
                 queued_seek_time: None,
+                buffer_time: 0.1,
                 last_decoded_bitmap: None,
                 avm_object,
                 avm2_client: None,
@@ -360,7 +365,7 @@ impl<'gc> NetStream<'gc> {
     }
 
     pub fn report_error(self, _error: Error) {
-        //TODO: Report an `asyncError` to AVM1 or 2.
+        // TODO: Report an `asyncError` to AVM1 or 2.
     }
 
     pub fn bytes_loaded(self) -> usize {
@@ -376,6 +381,14 @@ impl<'gc> NetStream<'gc> {
 
     pub fn time(self) -> f64 {
         self.0.read().stream_time
+    }
+
+    pub fn buffer_time(self) -> f64 {
+        self.0.read().buffer_time
+    }
+
+    pub fn set_buffer_time(self, mc: &Mutation<'gc>, buffer_time: f64) {
+        self.0.write(mc).buffer_time = buffer_time;
     }
 
     /// Queue a seek to be executed on the next frame tick.
@@ -960,6 +973,10 @@ impl<'gc> NetStream<'gc> {
                 ) {
                     Ok(bitmap_info) => {
                         write.last_decoded_bitmap = Some(bitmap_info);
+                        if let Some(mc) = write.attached_to {
+                            mc.invalidate_cached_bitmap(context.gc_context);
+                            *context.needs_render = true;
+                        }
                     }
                     Err(e) => {
                         tracing::error!("Decoding video frame {} failed: {}", frame_id, e);
@@ -969,11 +986,43 @@ impl<'gc> NetStream<'gc> {
             (_, _, FlvVideoPacket::CommandFrame(_command)) => {
                 tracing::warn!("Stub: FLV command frame processing")
             }
-            (_, _, FlvVideoPacket::AvcSequenceHeader(_data)) => {
-                tracing::warn!("Stub: FLV AVC/H.264 Sequence Header processing")
+            (Some(video_handle), _, FlvVideoPacket::AvcSequenceHeader(data)) => {
+                match context
+                    .video
+                    .configure_video_stream_decoder(video_handle, data)
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("Configuring video decoder {} failed: {}", frame_id, e);
+                    }
+                }
             }
-            (_, _, FlvVideoPacket::AvcNalu { .. }) => {
-                tracing::warn!("Stub: FLV AVC/H.264 NALU processing")
+            (
+                Some(video_handle),
+                Some(codec),
+                FlvVideoPacket::AvcNalu {
+                    composition_time_offset: _,
+                    data,
+                },
+            ) => {
+                let encoded_frame = EncodedFrame {
+                    codec,
+                    data,
+                    frame_id,
+                };
+
+                match context.video.decode_video_stream_frame(
+                    video_handle,
+                    encoded_frame,
+                    context.renderer,
+                ) {
+                    Ok(bitmap_info) => {
+                        write.last_decoded_bitmap = Some(bitmap_info);
+                    }
+                    Err(e) => {
+                        tracing::error!("Decoding video frame {} failed: {}", frame_id, e);
+                    }
+                }
             }
             (_, _, FlvVideoPacket::AvcEndOfSequence) => {
                 tracing::warn!("Stub: FLV AVC/H.264 End of Sequence processing")
@@ -983,6 +1032,9 @@ impl<'gc> NetStream<'gc> {
                     "FLV video tag has invalid codec id {}",
                     video_data.codec_id as u8
                 )
+            }
+            (None, _, _) => {
+                tracing::error!("No video handle")
             }
         }
 

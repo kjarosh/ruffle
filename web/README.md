@@ -57,7 +57,7 @@ should work. Additionally, headless JREs should also work.
 
 Follow the instructions to [install Node.js](https://nodejs.org/) on your machine.
 
-We recommend using the currently active LTS 20, but we do also run tests with current Node.js 21.
+We recommend using the currently active LTS 20, but we do also run tests with current Node.js 22.
 
 Note that npm 7 or newer is required. It should come bundled with Node.js 15 or newer, but can be upgraded with older Node.js versions using `npm install -g npm` as root/Administrator.
 
@@ -79,6 +79,18 @@ Some ways to install Binaryen:
 -   [compile it yourself](https://github.com/WebAssembly/binaryen#building)
 
 Just make sure the `wasm-opt` program is in `$PATH`, and that it works.
+
+#### Optional features
+
+##### `jpegxr`
+
+The release version of the extension is compiled with `jpegxr`.
+To enable it, set the the env `CARGO_FEATURES="jpegxr"`.
+
+Windows dependencies:
+
+- Install LLVM and add the full path of its `bin` folder (example: `C:\Program Files\LLVM-18.1.6\bin`) to your env `PATH`.
+- Set env `LIBCLANG_PATH` with the same `bin` folder.
 
 ### Building
 

@@ -48,15 +48,14 @@ pub trait FileDialogResult: Downcast {
     fn file_name(&self) -> Option<String>;
     fn size(&self) -> Option<u64>;
     fn file_type(&self) -> Option<String>;
-    fn creator(&self) -> Option<String>;
+    fn creator(&self) -> Option<String> {
+        None
+    }
     fn contents(&self) -> &[u8];
-    /// Write the given data to the chosen file
-    /// This will not necessarily by reflected in future calls to other functions (such as [FileDialogResult::size]),
-    /// until [FileDialogResult::refresh] is called
-    fn write(&self, data: &[u8]);
-    /// Refresh any internal metadata, any future calls to other functions (such as [FileDialogResult::size]) will reflect
+    /// Write the given data to the chosen file and refresh any internal metadata.
+    /// Any future calls to other functions (such as [FileDialogResult::size]) will reflect
     /// the state at the time of the last refresh
-    fn refresh(&mut self);
+    fn write_and_refresh(&mut self, data: &[u8]);
 }
 impl_downcast!(FileDialogResult);
 
@@ -73,6 +72,11 @@ pub trait UiBackend: Downcast {
 
     /// Get the clipboard content
     fn clipboard_content(&mut self) -> String;
+
+    /// Check if the clipboard is available and not empty
+    fn clipboard_available(&mut self) -> bool {
+        !self.clipboard_content().is_empty()
+    }
 
     /// Sets the clipboard to the given content.
     fn set_clipboard_content(&mut self, content: String);
@@ -359,14 +363,9 @@ impl FileDialogResult for NullFileDialogResult {
     fn file_type(&self) -> Option<String> {
         None
     }
-    fn creator(&self) -> Option<String> {
-        None
-    }
-
     fn contents(&self) -> &[u8] {
         &[]
     }
 
-    fn write(&self, _data: &[u8]) {}
-    fn refresh(&mut self) {}
+    fn write_and_refresh(&mut self, _data: &[u8]) {}
 }

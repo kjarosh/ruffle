@@ -2,8 +2,6 @@ package {
     [Ruffle(InstanceAllocator)]
     [Ruffle(CallHandler)]
     public final dynamic class XML {
-        import __ruffle__.stub_method;
-
         AS3 native function normalize(): XML;
 
         AS3 static function setSettings(settings:Object = null): void {
@@ -61,6 +59,9 @@ package {
         AS3 function namespace(prefix:* = null):* {
             return namespace_internal_impl(arguments.length > 0, prefix);
         }
+        AS3 native function addNamespace(ns:*):XML;
+        AS3 native function setNamespace(ns:*):void;
+        AS3 native function removeNamespace(ns:*):XML;
         AS3 native function inScopeNamespaces():Array;
         AS3 native function namespaceDeclarations():Array;
         AS3 native function localName():Object;
@@ -68,6 +69,7 @@ package {
         AS3 native function child(name:*):XMLList;
         AS3 native function childIndex():int;
         AS3 native function children():XMLList;
+        AS3 native function contains(value:*):Boolean;
         AS3 native function copy():XML;
         AS3 native function parent():*;
         AS3 native function elements(name:* = "*"):XMLList;
@@ -131,9 +133,24 @@ package {
             self.AS3::setName(name);
         };
 
-        prototype.namespace = function(prefix:String = null):* {
+        prototype.namespace = function(prefix:* = null):* {
             var self:XML = this;
             return self.AS3::namespace.apply(self, arguments);
+        };
+
+        prototype.addNamespace = function(ns:*):XML {
+            var self:XML = this;
+            return self.AS3::addNamespace(ns);
+        };
+
+        prototype.setNamespace = function(ns:*):void {
+            var self:XML = this;
+            self.AS3::setNamespace(ns);
+        };
+
+        prototype.removeNamespace = function(ns:*):XML {
+            var self:XML = this;
+            return self.AS3::removeNamespace(ns);
         };
 
         prototype.namespaceDeclarations = function():Array {
@@ -161,7 +178,7 @@ package {
             return self.AS3::child(name);
         };
 
-        prototype.childIndex = function():XMLList {
+        prototype.childIndex = function():int {
             var self:XML = this;
             return self.AS3::childIndex();
         };
@@ -169,6 +186,11 @@ package {
         prototype.children = function():XMLList {
             var self:XML = this;
             return self.AS3::children();
+        };
+
+        prototype.contains = function(value:*):Boolean {
+            var self:XML = this;
+            return self.AS3::contains(value);
         };
 
         prototype.copy = function():XML {
@@ -248,27 +270,27 @@ package {
             return self.AS3::comments();
         }
 
-        prototype.processingInstructions = function(name:String = "*"):XMLList {
+        prototype.processingInstructions = function(name:* = "*"):XMLList {
             var self:XML = this;
             return self.AS3::processingInstructions(name);
         }
 
-        prototype.insertChildAfter = function(child1:Object, child2:Object):* {
+        prototype.insertChildAfter = function(child1:*, child2:*):* {
             var self:XML = this;
             return self.AS3::insertChildAfter(child1, child2);
         }
 
-        prototype.insertChildBefore = function(child1:Object, child2:Object):* {
+        prototype.insertChildBefore = function(child1:*, child2:*):* {
             var self:XML = this;
             return self.AS3::insertChildBefore(child1, child2);
         }
 
-        prototype.replace = function(propertyName:Object, value:*):XML {
+        prototype.replace = function(propertyName:*, value:*):XML {
             var self:XML = this;
             return self.AS3::replace(propertyName, value);
         }
 
-        prototype.setChildren = function(value:Object):XML {
+        prototype.setChildren = function(value:*):XML {
             var self:XML = this;
             return self.AS3::setChildren(value);
         }

@@ -1,7 +1,7 @@
 use crate::parse::DocumentHolder;
 use crate::recents::{Recent, Recents};
 use crate::write::TableExt;
-use toml_edit::{value, Table};
+use toml_edit::{value, ArrayOfTables, Table};
 
 pub struct RecentsWriter<'a>(&'a mut DocumentHolder<Recents>);
 
@@ -10,11 +10,28 @@ impl<'a> RecentsWriter<'a> {
         Self(recents)
     }
 
+    fn with_underlying_table(&mut self, fun: impl FnOnce(&mut Recents, &mut ArrayOfTables)) {
+        self.0.edit(|values, toml_document| {
+            let table = toml_document.get_or_create_array_of_tables("recent");
+            fun(values, table)
+        })
+    }
+
+    pub fn clear(&mut self) {
+        self.with_underlying_table(|values, array| {
+            array.clear();
+            values.clear();
+        });
+    }
+
     /// Pushes a new recent entry on the entry stack, if same entry already exists, it will get moved to the top.
     pub fn push(&mut self, recent: Recent, limit: usize) {
-        self.0.edit(|values, toml_document| {
-            let array = toml_document.get_or_create_array_of_tables("recent");
+        if limit == 0 {
+            // Do not even bother.
+            return;
+        }
 
+        self.with_underlying_table(|values, array| {
             // First, lets check if we already have existing entry with the same URL and move it to the top.
             let existing = values.iter().position(|x| x.url == recent.url);
 
@@ -22,14 +39,10 @@ impl<'a> RecentsWriter<'a> {
                 // Existing entry, just move it to the top.
 
                 // Update TOML first, then internal values.
-                // TODO: Unfortunately, ArrayOfTables does not return the removed entry, so we need to recreate it.
-                //       https://github.com/toml-rs/toml/issues/712
                 array.remove(index);
-                let mut table = Table::new();
-                table["url"] = value(recent.url.as_str());
-                array.push(table);
+                array.push(Self::create_recent_table(&recent));
 
-                let recent = values.remove(index);
+                values.remove(index);
                 values.push(recent);
             } else {
                 // New entry.
@@ -46,12 +59,17 @@ impl<'a> RecentsWriter<'a> {
                 }
 
                 // Create a new table and push it.
-                let mut table = Table::new();
-                table["url"] = value(recent.url.as_str());
-                array.push(table);
+                array.push(Self::create_recent_table(&recent));
                 values.push(recent);
             }
         });
+    }
+
+    fn create_recent_table(recent: &Recent) -> Table {
+        let mut table = Table::new();
+        table["url"] = value(recent.url.as_str());
+        table["name"] = value(&recent.name);
+        table
     }
 }
 
@@ -71,11 +89,12 @@ mod tests {
                 writer.push(
                     Recent {
                         url: Url::parse("file:///1.swf").unwrap(),
+                        name: "Test 1".to_string(),
                     },
                     10,
                 )
             },
-            "[[recent]]\nurl = \"file:///1.swf\"\n",
+            "[[recent]]\nurl = \"file:///1.swf\"\nname = \"Test 1\"\n",
         );
     }
 
@@ -83,13 +102,54 @@ mod tests {
     fn test_limit() {
         test("[[recent]]\nurl = \"file:///1.swf\"\n[[recent]]\nurl = \"file:///2.swf\"\n[[recent]]\nurl = \"file:///3.swf\"\n", |writer| writer.push(Recent {
             url: Url::parse("file:///very_important_file.swf").unwrap(),
-        }, 2), "[[recent]]\nurl = \"file:///3.swf\"\n\n[[recent]]\nurl = \"file:///very_important_file.swf\"\n");
+            name: "Important File".to_string(),
+        }, 2), "[[recent]]\nurl = \"file:///3.swf\"\n\n[[recent]]\nurl = \"file:///very_important_file.swf\"\nname = \"Important File\"\n");
     }
 
     #[test]
     fn test_move_to_top() {
         test("[[recent]]\nurl = \"file:///very_important_file.swf\"\n[[recent]]\nurl = \"file:///2.swf\"\n[[recent]]\nurl = \"file:///3.swf\"\n", |writer| writer.push(Recent {
             url: Url::parse("file:///very_important_file.swf").unwrap(),
-        }, 3), "[[recent]]\nurl = \"file:///2.swf\"\n[[recent]]\nurl = \"file:///3.swf\"\n\n[[recent]]\nurl = \"file:///very_important_file.swf\"\n");
+            name: "Important File".to_string()
+        }, 3), "[[recent]]\nurl = \"file:///2.swf\"\n[[recent]]\nurl = \"file:///3.swf\"\n\n[[recent]]\nurl = \"file:///very_important_file.swf\"\nname = \"Important File\"\n");
+    }
+
+    #[test]
+    fn clear() {
+        test("[[recent]]\nurl = \"file:///file_one.swf\"\n[[recent]]\nurl = \"file:///file_two.swf\"\n[[recent]]\nurl = \"file:///3.swf\"\n", |writer| writer.clear(), "");
+    }
+
+    #[test]
+    fn zero_limit() {
+        test(
+            "",
+            |writer| {
+                writer.push(
+                    Recent {
+                        url: Url::parse("file:///no_crash.swf").unwrap(),
+                        name: "".to_string(),
+                    },
+                    0,
+                )
+            },
+            "",
+        );
+    }
+
+    #[test]
+    fn name() {
+        test(
+            "",
+            |writer| {
+                writer.push(
+                    Recent {
+                        url: Url::parse("file:///cake.swf").unwrap(),
+                        name: "The cake is a lie!".to_string(),
+                    },
+                    10,
+                )
+            },
+            "[[recent]]\nurl = \"file:///cake.swf\"\nname = \"The cake is a lie!\"\n",
+        );
     }
 }

@@ -32,10 +32,12 @@ use crate::vminterface::Instantiator;
 use crate::{avm2_stub_method, avm2_stub_method_context};
 use encoding_rs::UTF_8;
 use gc_arena::{Collect, GcCell};
+use indexmap::IndexMap;
 use ruffle_render::utils::{determine_jpeg_tag_format, JpegTagFormat};
 use slotmap::{new_key_type, SlotMap};
 use std::borrow::Borrow;
 use std::fmt;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex, Weak};
 use std::time::Duration;
 use swf::read::{extract_swz, read_compression_type};
@@ -72,6 +74,22 @@ pub enum LoadBehavior {
     /// done synchronously. Complex movies will visibly block the player from
     /// accepting user input and the application will appear to freeze.
     Blocking,
+}
+
+pub struct ParseEnumError;
+
+impl FromStr for LoadBehavior {
+    type Err = ParseEnumError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let behavior = match s {
+            "streaming" => LoadBehavior::Streaming,
+            "delayed" => LoadBehavior::Delayed,
+            "blocking" => LoadBehavior::Blocking,
+            _ => return Err(ParseEnumError),
+        };
+        Ok(behavior)
+    }
 }
 
 /// Enumeration of all content types that `Loader` can handle.
@@ -267,6 +285,7 @@ impl<'gc> LoadManager<'gc> {
             | Loader::SaveFileDialog { self_handle, .. }
             | Loader::DownloadFileDialog { self_handle, .. }
             | Loader::UploadFile { self_handle, .. }
+            | Loader::StyleSheet { self_handle, .. }
             | Loader::MovieUnloader { self_handle, .. } => *self_handle = Some(handle),
         }
         handle
@@ -413,6 +432,24 @@ impl<'gc> LoadManager<'gc> {
         let handle = self.add_loader(loader);
         let loader = self.get_loader_mut(handle).unwrap();
         loader.load_vars_loader(player, request)
+    }
+
+    /// Kick off an AVM1 StyleSheet load
+    ///
+    /// Returns the loader's async process, which you will need to spawn.
+    pub fn load_stylesheet(
+        &mut self,
+        player: Weak<Mutex<Player>>,
+        target_object: Object<'gc>,
+        request: Request,
+    ) -> OwnedFuture<(), Error> {
+        let loader = Loader::StyleSheet {
+            self_handle: None,
+            target_object,
+        };
+        let handle = self.add_loader(loader);
+        let loader = self.get_loader_mut(handle).unwrap();
+        loader.load_stylesheet_loader(player, request)
     }
 
     /// Kick off a data load into a `URLLoader`, updating
@@ -807,6 +844,16 @@ pub enum Loader<'gc> {
         /// The target AVM1 object to select a file path from.
         target_object: Object<'gc>,
     },
+
+    /// Loader that is downloading a stylesheet
+    StyleSheet {
+        /// The handle to refer to this loader instance.
+        #[collect(require_static)]
+        self_handle: Option<LoaderHandle>,
+
+        /// The target AVM1 object to submit the styles to
+        target_object: Object<'gc>,
+    },
 }
 
 impl<'gc> Loader<'gc> {
@@ -1004,6 +1051,21 @@ impl<'gc> Loader<'gc> {
                 if let Some(mut mc) = clip.as_movie_clip() {
                     if !mc.movie().is_action_script_3() {
                         mc.avm1_unload(uc);
+
+                        // Clear deletable properties on the target before loading
+                        // Properties written during the subsequent onLoad events will persist
+                        let clip_value = mc.object();
+                        if let Value::Object(clip_object) = clip_value {
+                            let mut activation = Activation::from_nothing(
+                                uc.reborrow(),
+                                ActivationIdentifier::root("unknown"),
+                                clip,
+                            );
+
+                            for key in clip_object.get_keys(&mut activation, true) {
+                                clip_object.delete(&mut activation, key);
+                            }
+                        }
                     }
 
                     // Before the actual SWF is loaded, an initial loading state is entered.
@@ -1019,7 +1081,43 @@ impl<'gc> Loader<'gc> {
 
                     let movie = SwfMovie::from_data(&body, url.to_string(), loader_url)?;
                     player.lock().unwrap().mutate_with_update_context(|uc| {
+                        // Make a copy of the properties on the root, so we can put them back after replacing it
+                        let mut root_properties: IndexMap<AvmString, Value> = IndexMap::new();
+                        if let Some(root) = uc.stage.root_clip() {
+                            let root_val = root.object();
+                            if let Value::Object(root_object) = root_val {
+                                let mut activation = Activation::from_nothing(
+                                    uc.reborrow(),
+                                    ActivationIdentifier::root("unknown"),
+                                    root,
+                                );
+                                for key in root_object.get_keys(&mut activation, true) {
+                                    let val = root_object
+                                        .get_stored(key, &mut activation)
+                                        .unwrap_or(Value::Undefined);
+                                    root_properties.insert(key, val);
+                                }
+                            }
+                        }
+
                         uc.replace_root_movie(movie);
+
+                        // Add the copied properties back onto the new root
+                        if !root_properties.is_empty() {
+                            if let Some(root) = uc.stage.root_clip() {
+                                let val = root.object();
+                                if let Value::Object(clip_object) = val {
+                                    let mut activation = Activation::from_nothing(
+                                        uc.reborrow(),
+                                        ActivationIdentifier::root("unknown"),
+                                        root,
+                                    );
+                                    for (key, val) in root_properties {
+                                        let _ = clip_object.set(key, val, &mut activation);
+                                    }
+                                }
+                            }
+                        }
                     });
                     return Ok(());
                 }
@@ -1259,6 +1357,78 @@ impl<'gc> Loader<'gc> {
                         let _ = that.call_method(
                             "onData".into(),
                             &[Value::Undefined],
+                            &mut activation,
+                            ExecutionReason::Special,
+                        );
+                    }
+                }
+
+                Ok(())
+            })
+        })
+    }
+
+    /// Creates a future for a LoadVars load call.
+    fn load_stylesheet_loader(
+        &mut self,
+        player: Weak<Mutex<Player>>,
+        request: Request,
+    ) -> OwnedFuture<(), Error> {
+        let handle = match self {
+            Loader::StyleSheet { self_handle, .. } => {
+                self_handle.expect("Loader not self-introduced")
+            }
+            _ => return Box::pin(async { Err(Error::NotLoadVarsLoader) }),
+        };
+
+        let player = player
+            .upgrade()
+            .expect("Could not upgrade weak reference to player");
+
+        Box::pin(async move {
+            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let response = Self::wait_for_full_response(fetch).await;
+
+            // Fire the load handler.
+            player.lock().unwrap().update(|uc| {
+                let loader = uc.load_manager.get_loader(handle);
+                let that = match loader {
+                    Some(&Loader::StyleSheet { target_object, .. }) => target_object,
+                    None => return Err(Error::Cancelled),
+                    _ => return Err(Error::NotLoadVarsLoader),
+                };
+
+                let mut activation =
+                    Activation::from_stub(uc.reborrow(), ActivationIdentifier::root("[Loader]"));
+
+                match response {
+                    Ok((body, _, _, _)) => {
+                        // Fire the parse & onLoad methods with the loaded string.
+                        let css = AvmString::new_utf8(
+                            activation.context.gc_context,
+                            UTF_8.decode(&body).0,
+                        );
+                        let success = that
+                            .call_method(
+                                "parse".into(),
+                                &[css.into()],
+                                &mut activation,
+                                ExecutionReason::Special,
+                            )
+                            .unwrap_or(Value::Bool(false));
+                        let _ = that.call_method(
+                            "onLoad".into(),
+                            &[success],
+                            &mut activation,
+                            ExecutionReason::Special,
+                        );
+                    }
+                    Err(_) => {
+                        // TODO: Log "Error opening URL" trace similar to the Flash Player?
+
+                        let _ = that.call_method(
+                            "onLoad".into(),
+                            &[Value::Bool(false)],
                             &mut activation,
                             ExecutionReason::Special,
                         );
@@ -2686,8 +2856,7 @@ impl<'gc> Loader<'gc> {
                 match dialog_result {
                     Ok(mut dialog_result) => {
                         if !dialog_result.is_cancelled() {
-                            dialog_result.write(&data);
-                            dialog_result.refresh();
+                            dialog_result.write_and_refresh(&data);
                             target_object.init_from_dialog_result(dialog_result);
 
                             let mut activation = Avm2Activation::from_nothing(uc.reborrow());
@@ -2840,8 +3009,7 @@ impl<'gc> Loader<'gc> {
                                     // perspective of AS, we want to refresh the file_ref internal data
                                     // before invoking the callbacks
 
-                                    dialog_result.write(&body);
-                                    dialog_result.refresh();
+                                    dialog_result.write_and_refresh(&body);
                                     file_ref.init_from_dialog_result(
                                         &mut activation,
                                         dialog_result.borrow(),

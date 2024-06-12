@@ -6,10 +6,11 @@
 
 use crate::avm1;
 use crate::avm2;
-use crate::display_object::Stage;
-use crate::display_object::TDisplayObject;
+use crate::context::UpdateContext;
+use crate::display_object::{EditText, Stage};
+use crate::display_object::{InteractiveObject, TDisplayObject};
+use crate::events::TextControlCode;
 use crate::i18n::core_text;
-use fluent_templates::LanguageIdentifier;
 use gc_arena::Collect;
 use ruffle_render::quality::StageQuality;
 use serde::Serialize;
@@ -26,22 +27,37 @@ impl<'gc> ContextMenuState<'gc> {
     pub fn new() -> Self {
         Self::default()
     }
+
     pub fn push(&mut self, item: ContextMenuItem, callback: ContextMenuCallback<'gc>) {
         self.info.push(item);
         self.callbacks.push(callback);
     }
+
     pub fn info(&self) -> &Vec<ContextMenuItem> {
         &self.info
     }
+
     pub fn callback(&self, index: usize) -> &ContextMenuCallback<'gc> {
         &self.callbacks[index]
     }
+
     pub fn build_builtin_items(
         &mut self,
         item_flags: BuiltInItemFlags,
-        stage: Stage<'gc>,
-        language: &LanguageIdentifier,
+        context: &mut UpdateContext<'_, 'gc>,
     ) {
+        let stage = context.stage;
+        let language = &context.ui.language();
+
+        // When a text field is focused and the mouse is hovering it,
+        // show the copy/paste menu.
+        if let Some(text) = context.focus_tracker.get_as_edit_text() {
+            if InteractiveObject::option_ptr_eq(context.mouse_data.hovered, text.as_interactive()) {
+                self.build_text_items(text, context);
+                return;
+            }
+        }
+
         let Some(root_mc) = stage.root_clip().and_then(|c| c.as_movie_clip()) else {
             return;
         };
@@ -121,6 +137,70 @@ impl<'gc> ContextMenuState<'gc> {
             );
         }
     }
+
+    fn build_text_items(&mut self, text: EditText<'gc>, context: &mut UpdateContext<'_, 'gc>) {
+        let language = &context.ui.language();
+        self.push(
+            ContextMenuItem {
+                enabled: text.is_text_control_applicable(TextControlCode::Cut, context),
+                separator_before: true,
+                caption: core_text(language, "context-menu-cut"),
+                checked: false,
+            },
+            ContextMenuCallback::TextControl {
+                code: TextControlCode::Cut,
+                text,
+            },
+        );
+        self.push(
+            ContextMenuItem {
+                enabled: text.is_text_control_applicable(TextControlCode::Copy, context),
+                separator_before: false,
+                caption: core_text(language, "context-menu-copy"),
+                checked: false,
+            },
+            ContextMenuCallback::TextControl {
+                code: TextControlCode::Copy,
+                text,
+            },
+        );
+        self.push(
+            ContextMenuItem {
+                enabled: text.is_text_control_applicable(TextControlCode::Paste, context),
+                separator_before: false,
+                caption: core_text(language, "context-menu-paste"),
+                checked: false,
+            },
+            ContextMenuCallback::TextControl {
+                code: TextControlCode::Paste,
+                text,
+            },
+        );
+        self.push(
+            ContextMenuItem {
+                enabled: text.is_text_control_applicable(TextControlCode::Delete, context),
+                separator_before: false,
+                caption: core_text(language, "context-menu-delete"),
+                checked: false,
+            },
+            ContextMenuCallback::TextControl {
+                code: TextControlCode::Delete,
+                text,
+            },
+        );
+        self.push(
+            ContextMenuItem {
+                enabled: text.is_text_control_applicable(TextControlCode::SelectAll, context),
+                separator_before: true,
+                caption: core_text(language, "context-menu-select-all"),
+                checked: false,
+            },
+            ContextMenuCallback::TextControl {
+                code: TextControlCode::SelectAll,
+                text,
+            },
+        );
+    }
 }
 
 #[derive(Clone, Serialize)]
@@ -151,6 +231,11 @@ pub enum ContextMenuCallback<'gc> {
     },
     Avm2 {
         item: avm2::Object<'gc>,
+    },
+    TextControl {
+        #[collect(require_static)]
+        code: TextControlCode,
+        text: EditText<'gc>,
     },
 }
 

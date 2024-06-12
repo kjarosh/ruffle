@@ -305,27 +305,6 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         }
     }
 
-    /// Resolves a definition using either the current or outer scope of this activation.
-    pub fn resolve_definition(
-        &mut self,
-        name: &Multiname<'gc>,
-    ) -> Result<Option<Value<'gc>>, Error<'gc>> {
-        let outer_scope = self.outer;
-
-        if let Some(obj) = search_scope_stack(self.scope_frame(), name, outer_scope.is_empty())? {
-            Ok(Some(obj.get_property(name, self)?))
-        } else if let Some(result) = outer_scope.resolve(name, self)? {
-            Ok(Some(result))
-        } else if let Some(global) = self.global_scope() {
-            if !global.base().has_own_property(name) {
-                return Ok(None);
-            }
-            return Ok(Some(global.base().get_property_local(name, self)?));
-        } else {
-            Ok(None)
-        }
-    }
-
     /// Resolve a single parameter value.
     ///
     /// Given an individual parameter value and the associated parameter's
@@ -943,7 +922,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
                 Op::FindDef { multiname } => self.op_find_def(*multiname),
                 Op::FindProperty { multiname } => self.op_find_property(*multiname),
                 Op::FindPropStrict { multiname } => self.op_find_prop_strict(*multiname),
-                Op::GetLex { multiname } => self.op_get_lex(*multiname),
+                Op::GetScriptGlobals { script } => self.op_get_script_globals(*script),
                 Op::GetDescendants { multiname } => self.op_get_descendants(*multiname),
                 Op::GetSlot { index } => self.op_get_slot(*index),
                 Op::SetSlot { index } => self.op_set_slot(*index),
@@ -1375,6 +1354,8 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         }
 
         // (fast) side path for dictionary/array-likes
+        // NOTE: FP behaves differently here when the public namespace isn't
+        // included in the multiname's namespace set
         if multiname.has_lazy_name() && !multiname.has_lazy_ns() {
             // `MultinameL` is the only form of multiname that allows fast-path
             // or alternate-path lookups based on the local name *value*,
@@ -1434,25 +1415,43 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         }
 
         // side path for dictionary/arrays (TODO)
+        // NOTE: FP behaves differently here when the public namespace isn't
+        // included in the multiname's namespace set
         if multiname.has_lazy_name() && !multiname.has_lazy_ns() {
             // `MultinameL` is the only form of multiname that allows fast-path
             // or alternate-path lookups based on the local name *value*,
             // rather than it's string representation.
 
             let name_value = self.context.avm2.peek(0);
-            let object = self.context.avm2.peek(1);
-            if !name_value.is_primitive() {
-                let object = object.coerce_to_object_or_typeerror(self, None)?;
-                if let Some(dictionary) = object.as_dictionary_object() {
-                    let _ = self.pop_stack();
-                    let _ = self.pop_stack();
-                    dictionary.set_property_by_object(
-                        name_value.as_object().unwrap(),
-                        value,
-                        self.context.gc_context,
-                    );
+            let object_value = self.context.avm2.peek(1);
 
-                    return Ok(FrameControl::Continue);
+            if let Value::Object(object) = object_value {
+                match name_value {
+                    Value::Integer(name_int) if name_int >= 0 => {
+                        if let Some(mut array) =
+                            object.as_array_storage_mut(self.context.gc_context)
+                        {
+                            let _ = self.pop_stack();
+                            let _ = self.pop_stack();
+                            array.set(name_int as usize, value);
+
+                            return Ok(FrameControl::Continue);
+                        }
+                    }
+                    Value::Object(name_object) => {
+                        if let Some(dictionary) = object.as_dictionary_object() {
+                            let _ = self.pop_stack();
+                            let _ = self.pop_stack();
+                            dictionary.set_property_by_object(
+                                name_object,
+                                value,
+                                self.context.gc_context,
+                            );
+
+                            return Ok(FrameControl::Continue);
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
@@ -1669,7 +1668,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         // Verifier ensures that multiname is non-lazy
 
         avm_debug!(self.avm2(), "Resolving {:?}", *multiname);
-        let (_, mut script) = self.domain().find_defining_script(self, &multiname)?;
+        let (_, script) = self.domain().find_defining_script(self, &multiname)?;
         let obj = script.globals(&mut self.context)?;
         self.push_stack(obj);
         Ok(FrameControl::Continue)
@@ -1709,6 +1708,17 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         Ok(FrameControl::Continue)
     }
 
+    fn op_get_script_globals(
+        &mut self,
+        script: Script<'gc>,
+    ) -> Result<FrameControl<'gc>, Error<'gc>> {
+        let globals = script.globals(&mut self.context)?;
+
+        self.push_stack(globals);
+
+        Ok(FrameControl::Continue)
+    }
+
     fn op_get_descendants(
         &mut self,
         multiname: Gc<'gc, Multiname<'gc>>,
@@ -1736,23 +1746,6 @@ impl<'a, 'gc> Activation<'a, 'gc> {
                 1016,
             )?));
         }
-
-        Ok(FrameControl::Continue)
-    }
-
-    fn op_get_lex(
-        &mut self,
-        multiname: Gc<'gc, Multiname<'gc>>,
-    ) -> Result<FrameControl<'gc>, Error<'gc>> {
-        // Verifier ensures that multiname is non-lazy
-
-        avm_debug!(self.avm2(), "Resolving {:?}", *multiname);
-        let found: Result<Value<'gc>, Error<'gc>> =
-            self.resolve_definition(&multiname)?.ok_or_else(|| {
-                make_reference_error(self, ReferenceErrorCode::InvalidLookup, &multiname, None)
-            });
-
-        self.push_stack(found?);
 
         Ok(FrameControl::Continue)
     }
@@ -2838,7 +2831,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let dm = self.domain_memory();
         let mut dm = dm
             .as_bytearray_mut(self.context.gc_context)
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+            .expect("Bytearray storage should exist");
 
         let Ok(address) = usize::try_from(address) else {
             return Err(make_error_1506(self));
@@ -2848,8 +2841,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
             return Err(make_error_1506(self));
         }
 
-        dm.write_at_nongrowing(&val.to_le_bytes(), address)
-            .map_err(|e| e.to_avm(self))?;
+        dm.set_nongrowing(address, val as u8);
 
         Ok(FrameControl::Continue)
     }
@@ -2862,7 +2854,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let dm = self.domain_memory();
         let mut dm = dm
             .as_bytearray_mut(self.context.gc_context)
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+            .expect("Bytearray storage should exist");
 
         let Ok(address) = usize::try_from(address) else {
             return Err(make_error_1506(self));
@@ -2884,7 +2876,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let dm = self.domain_memory();
         let mut dm = dm
             .as_bytearray_mut(self.context.gc_context)
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+            .expect("Bytearray storage should exist");
 
         let Ok(address) = usize::try_from(address) else {
             return Err(make_error_1506(self));
@@ -2906,7 +2898,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let dm = self.domain_memory();
         let mut dm = dm
             .as_bytearray_mut(self.context.gc_context)
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+            .expect("Bytearray storage should exist");
 
         let Ok(address) = usize::try_from(address) else {
             return Err(make_error_1506(self));
@@ -2928,7 +2920,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let dm = self.domain_memory();
         let mut dm = dm
             .as_bytearray_mut(self.context.gc_context)
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+            .expect("Bytearray storage should exist");
 
         let Ok(address) = usize::try_from(address) else {
             return Err(make_error_1506(self));
@@ -2947,9 +2939,8 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let address = self.pop_stack().coerce_to_u32(self)? as usize;
 
         let dm = self.domain_memory();
-        let dm = dm
-            .as_bytearray()
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+        let dm = dm.as_bytearray().expect("Bytearray storage should exist");
+
         let val = dm.get(address);
 
         if let Some(val) = val {
@@ -2966,9 +2957,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let address = self.pop_stack().coerce_to_u32(self)? as usize;
 
         let dm = self.domain_memory();
-        let dm = dm
-            .as_bytearray()
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+        let dm = dm.as_bytearray().expect("Bytearray storage should exist");
 
         if address > dm.len() - 2 {
             return Err(make_error_1506(self));
@@ -2985,9 +2974,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let address = self.pop_stack().coerce_to_u32(self)? as usize;
 
         let dm = self.domain_memory();
-        let dm = dm
-            .as_bytearray()
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+        let dm = dm.as_bytearray().expect("Bytearray storage should exist");
 
         if address > dm.len() - 4 {
             return Err(make_error_1506(self));
@@ -3003,9 +2990,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let address = self.pop_stack().coerce_to_u32(self)? as usize;
 
         let dm = self.domain_memory();
-        let dm = dm
-            .as_bytearray()
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+        let dm = dm.as_bytearray().expect("Bytearray storage should exist");
 
         if address > dm.len() - 4 {
             return Err(make_error_1506(self));
@@ -3022,9 +3007,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let address = self.pop_stack().coerce_to_u32(self)? as usize;
 
         let dm = self.domain_memory();
-        let dm = dm
-            .as_bytearray()
-            .ok_or_else(|| "Unable to get bytearray storage".to_string())?;
+        let dm = dm.as_bytearray().expect("Bytearray storage should exist");
 
         if address > dm.len() - 8 {
             return Err(make_error_1506(self));

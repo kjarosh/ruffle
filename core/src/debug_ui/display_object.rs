@@ -10,14 +10,17 @@ use crate::debug_ui::handle::{AVM1ObjectHandle, AVM2ObjectHandle, DisplayObjectH
 use crate::debug_ui::movie::open_movie_button;
 use crate::debug_ui::Message;
 use crate::display_object::{
-    DisplayObject, EditText, MovieClip, Stage, TDisplayObject, TDisplayObjectContainer,
-    TInteractiveObject,
+    AutoSizeMode, Bitmap, DisplayObject, EditText, InteractiveObject, MovieClip, Stage,
+    TDisplayObject, TDisplayObjectContainer, TInteractiveObject,
 };
+use crate::focus_tracker::Highlight;
 use egui::collapsing_header::CollapsingState;
-use egui::{Button, Checkbox, CollapsingHeader, ComboBox, Grid, Id, TextEdit, Ui, Widget, Window};
+use egui::{
+    Button, Checkbox, CollapsingHeader, ComboBox, DragValue, Grid, Id, TextEdit, Ui, Widget, Window,
+};
 use ruffle_wstr::{WStr, WString};
 use std::borrow::Cow;
-use swf::{ColorTransform, Fixed8};
+use swf::{Color, ColorTransform, Fixed8};
 
 const DEFAULT_DEBUG_COLORS: [[f32; 3]; 10] = [
     [0.00, 0.39, 0.00], // "darkgreen" / #006400
@@ -56,6 +59,7 @@ enum Panel {
     Position,
     Display,
     Children,
+    Interactive,
     TypeSpecific,
 }
 
@@ -116,11 +120,18 @@ impl DisplayObjectWindow {
         Window::new(summary_name(object))
             .id(Id::new(object.as_ptr()))
             .open(&mut keep_open)
-            .scroll2([true, true])
+            .scroll([true, true])
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.selectable_value(&mut self.open_panel, Panel::Position, "Position");
                     ui.selectable_value(&mut self.open_panel, Panel::Display, "Display");
+                    if object.as_interactive().is_some() {
+                        ui.selectable_value(
+                            &mut self.open_panel,
+                            Panel::Interactive,
+                            "Interactive",
+                        );
+                    }
                     if has_type_specific_tab(object) {
                         ui.selectable_value(
                             &mut self.open_panel,
@@ -148,9 +159,16 @@ impl DisplayObjectWindow {
                         if let DisplayObject::MovieClip(object) = object {
                             self.show_movieclip(ui, context, object)
                         } else if let DisplayObject::EditText(object) = object {
-                            self.show_edit_text(ui, object)
+                            self.show_edit_text(ui, context, object)
+                        } else if let DisplayObject::Bitmap(object) = object {
+                            self.show_bitmap(ui, context, object)
                         } else if let DisplayObject::Stage(object) = object {
                             self.show_stage(ui, context, object, messages)
+                        }
+                    }
+                    Panel::Interactive => {
+                        if let Some(int) = object.as_interactive() {
+                            self.show_interactive(ui, context, int)
                         }
                     }
                 }
@@ -158,10 +176,279 @@ impl DisplayObjectWindow {
         keep_open
     }
 
-    pub fn show_edit_text(&mut self, ui: &mut Ui, object: EditText) {
+    pub fn show_interactive<'gc>(
+        &mut self,
+        ui: &mut Ui,
+        context: &mut UpdateContext<'_, 'gc>,
+        object: InteractiveObject<'gc>,
+    ) {
+        Grid::new(ui.id().with("interactive"))
+            .num_columns(2)
+            .show(ui, |ui| {
+                ui.label("Mouse Enabled");
+                ui.horizontal(|ui| {
+                    let mut enabled = object.mouse_enabled();
+                    Checkbox::new(&mut enabled, "Enabled").ui(ui);
+                    if enabled != object.mouse_enabled() {
+                        object.set_mouse_enabled(context.gc_context, enabled);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Double-click Enabled");
+                ui.horizontal(|ui| {
+                    let mut enabled = object.double_click_enabled();
+                    Checkbox::new(&mut enabled, "Enabled").ui(ui);
+                    if enabled != object.double_click_enabled() {
+                        object.set_double_click_enabled(context.gc_context, enabled);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Tab Enabled");
+                {
+                    let mut enabled = object.tab_enabled(context);
+                    Checkbox::new(&mut enabled, "Enabled").ui(ui);
+                    if enabled != object.tab_enabled(context) {
+                        object.set_tab_enabled(context, enabled);
+                    }
+                }
+                ui.end_row();
+
+                ui.label("Tab Index");
+                ui.horizontal(|ui| {
+                    let tab_index = object.tab_index();
+                    let mut enabled = tab_index.is_some();
+                    Checkbox::without_text(&mut enabled).ui(ui);
+                    if enabled != tab_index.is_some() {
+                        if enabled {
+                            object.set_tab_index(context, Some(0));
+                        } else {
+                            object.set_tab_index(context, None);
+                        }
+                    }
+
+                    if let Some(tab_index) = tab_index.map(|i| i as usize) {
+                        let mut new_tab_index: usize = tab_index;
+                        DragValue::new(&mut new_tab_index).ui(ui);
+                        if new_tab_index != tab_index {
+                            object.set_tab_index(context, Some(new_tab_index as i32));
+                        }
+                    } else {
+                        ui.label("None");
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Focus Rect");
+                let focus_rect = object.focus_rect();
+                let mut new_focus_rect = focus_rect;
+                ComboBox::from_id_source(ui.id().with("focus_rect"))
+                    .selected_text(optional_boolean_switch_value(focus_rect))
+                    .show_ui(ui, |ui| {
+                        for value in [None, Some(true), Some(false)] {
+                            ui.selectable_value(
+                                &mut new_focus_rect,
+                                value,
+                                optional_boolean_switch_value(value),
+                            );
+                        }
+                    });
+                if new_focus_rect != focus_rect {
+                    object.set_focus_rect(context.gc(), new_focus_rect);
+                }
+                ui.end_row();
+
+                ui.label("Highlight Bounds");
+                if object.highlight_bounds().is_valid() {
+                    ui.label(object.highlight_bounds().to_string());
+                } else {
+                    ui.weak("Invalid");
+                }
+                ui.end_row();
+
+                ui.label("Derived Properties");
+                ui.add_enabled_ui(false, |ui| {
+                    ui.vertical(|ui| {
+                        ui.checkbox(&mut object.has_focus(), "Has Focus");
+                        ui.checkbox(&mut object.is_focusable(context), "Focusable");
+                        ui.checkbox(&mut object.is_tabbable(context), "Tabbable");
+                        ui.checkbox(&mut object.is_highlightable(context), "Highlightable");
+                    });
+                });
+                ui.end_row();
+
+                ui.label("Actions");
+                ui.horizontal(|ui| {
+                    if ui.button("Focus").clicked() {
+                        let focus_tracker = context.focus_tracker;
+                        focus_tracker.set(None, context);
+                        focus_tracker.set(Some(object), context);
+                    }
+                });
+                ui.end_row();
+            });
+    }
+
+    pub fn show_edit_text<'gc>(
+        &mut self,
+        ui: &mut Ui,
+        context: &mut UpdateContext<'_, 'gc>,
+        object: EditText<'gc>,
+    ) {
         Grid::new(ui.id().with("edittext"))
             .num_columns(2)
             .show(ui, |ui| {
+                ui.label("Border");
+                ui.horizontal(|ui| {
+                    let mut has_border = object.has_border();
+                    Checkbox::without_text(&mut has_border).ui(ui);
+                    if has_border != object.has_border() {
+                        object.set_has_border(context.gc(), has_border);
+                    }
+                    let mut border_color = object.border_color();
+                    color_edit_button(ui, &mut border_color);
+                    if border_color != object.border_color() {
+                        object.set_border_color(context.gc(), border_color);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Background");
+                ui.horizontal(|ui| {
+                    let mut has_background = object.has_background();
+                    Checkbox::without_text(&mut has_background).ui(ui);
+                    if has_background != object.has_background() {
+                        object.set_has_background(context.gc(), has_background);
+                    }
+                    let mut background_color = object.background_color();
+                    color_edit_button(ui, &mut background_color);
+                    if background_color != object.background_color() {
+                        object.set_background_color(context.gc(), background_color);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Editable");
+                ui.horizontal(|ui| {
+                    let mut editable = object.is_editable();
+                    ui.checkbox(&mut editable, "Enabled");
+                    if editable != object.is_editable() {
+                        object.set_editable(editable, context);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("HTML");
+                ui.horizontal(|ui| {
+                    let mut is_html = object.is_html();
+                    ui.checkbox(&mut is_html, "Enabled");
+                    if is_html != object.is_html() {
+                        object.set_is_html(context, is_html);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Selectable");
+                ui.horizontal(|ui| {
+                    let mut selectable = object.is_selectable();
+                    ui.checkbox(&mut selectable, "Enabled");
+                    if selectable != object.is_selectable() {
+                        object.set_selectable(selectable, context);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Word Wrap");
+                ui.horizontal(|ui| {
+                    let mut word_wrap = object.is_word_wrap();
+                    ui.checkbox(&mut word_wrap, "Enabled");
+                    if word_wrap != object.is_word_wrap() {
+                        object.set_word_wrap(word_wrap, context);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Multiline");
+                ui.horizontal(|ui| {
+                    let mut is_multiline = object.is_multiline();
+                    ui.checkbox(&mut is_multiline, "Enabled");
+                    if is_multiline != object.is_multiline() {
+                        object.set_multiline(is_multiline, context);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Password");
+                ui.horizontal(|ui| {
+                    let mut is_password = object.is_password();
+                    ui.checkbox(&mut is_password, "Enabled");
+                    if is_password != object.is_password() {
+                        object.set_password(is_password, context);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Autosize");
+                ui.horizontal(|ui| {
+                    let mut autosize = object.autosize();
+                    ComboBox::from_id_source(ui.id().with("autosize"))
+                        .selected_text(format!("{:?}", autosize))
+                        .show_ui(ui, |ui| {
+                            for value in [
+                                AutoSizeMode::None,
+                                AutoSizeMode::Left,
+                                AutoSizeMode::Center,
+                                AutoSizeMode::Right,
+                            ] {
+                                ui.selectable_value(&mut autosize, value, format!("{:?}", value));
+                            }
+                        });
+                    if autosize != object.autosize() {
+                        object.set_autosize(autosize, context);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Max Chars");
+                ui.horizontal(|ui| {
+                    let mut max_chars = object.max_chars();
+                    DragValue::new(&mut max_chars).ui(ui);
+                    if max_chars != object.max_chars() {
+                        object.set_max_chars(max_chars, context);
+                    }
+                });
+                ui.end_row();
+
+                ui.label("Restrict");
+                ui.horizontal(|ui| {
+                    let restrict = object.restrict();
+
+                    let restrict_enabled = restrict.is_some();
+                    let mut new_restrict_enabled = restrict_enabled;
+                    Checkbox::without_text(&mut new_restrict_enabled).ui(ui);
+                    if new_restrict_enabled != restrict_enabled {
+                        let new_restrict = if new_restrict_enabled {
+                            Some(WStr::empty())
+                        } else {
+                            None
+                        };
+                        object.set_restrict(new_restrict, context);
+                    }
+
+                    if let Some(original_restrict) = restrict {
+                        let original_restrict = original_restrict.to_string();
+                        let mut restrict = original_restrict.clone();
+                        ui.text_edit_singleline(&mut restrict);
+                        if restrict != original_restrict {
+                            object.set_restrict(Some(&WString::from_utf8(&restrict)), context);
+                        }
+                    } else {
+                        ui.weak("Disabled");
+                    }
+                });
+                ui.end_row();
+
                 ui.label("Selection");
                 if let Some(selection) = object.selection() {
                     if selection.is_caret() {
@@ -214,6 +501,29 @@ impl DisplayObjectWindow {
                         }
                     });
             });
+    }
+
+    pub fn show_bitmap<'gc>(
+        &mut self,
+        ui: &mut Ui,
+        context: &mut UpdateContext<'_, 'gc>,
+        object: Bitmap<'gc>,
+    ) {
+        let bitmap_data = object.bitmap_data(context.renderer);
+        let bitmap_data = bitmap_data.read();
+        let mut egui_texture = bitmap_data.egui_texture.borrow_mut();
+        let texture = egui_texture.get_or_insert_with(|| {
+            let image = egui::ColorImage::from_rgba_premultiplied(
+                [bitmap_data.width() as usize, bitmap_data.height() as usize],
+                &bitmap_data.pixels_rgba(),
+            );
+            ui.ctx().load_texture(
+                format!("bitmap-{:?}", object.as_ptr()),
+                image,
+                Default::default(),
+            )
+        });
+        ui.image((texture.id(), texture.size_vec2()));
     }
 
     pub fn show_movieclip<'gc>(
@@ -336,37 +646,102 @@ impl DisplayObjectWindow {
         object: Stage<'gc>,
         messages: &mut Vec<Message>,
     ) {
+        let focus_tracker = object.focus_tracker();
+        let focus = focus_tracker.get();
         Grid::new(ui.id().with("stage"))
             .num_columns(2)
             .show(ui, |ui| {
-                let focus = object.focus_tracker().get();
-                ui.label("Current Focus");
-                if let Some(focus) = focus.map(|o| o.as_displayobject()) {
-                    if ui.button(summary_name(focus)).clicked() {
-                        messages.push(Message::TrackDisplayObject(DisplayObjectHandle::new(
-                            context, focus,
-                        )));
-                    }
-                } else {
-                    ui.label("None");
+                ui.label("Stage Focus Rect");
+                let mut new_stage_focus_rect = object.stage_focus_rect();
+                ui.checkbox(&mut new_stage_focus_rect, "Enabled");
+                if new_stage_focus_rect != object.stage_focus_rect() {
+                    object.set_stage_focus_rect(context.gc(), new_stage_focus_rect);
                 }
                 ui.end_row();
 
-                let highlight = object.focus_tracker().is_highlight_active();
-                let highlight_enabled = focus.is_some_and(|o| o.is_highlightable(context));
-                ui.label("Focus Highlight");
-                ui.add_enabled_ui(highlight_enabled, |ui| {
-                    let mut enabled = highlight;
-                    Checkbox::new(&mut enabled, "Enabled").ui(ui);
-                    if enabled != highlight {
-                        if enabled {
-                            object.focus_tracker().update_highlight(context);
-                        } else {
-                            object.focus_tracker().reset_highlight();
-                        }
+                ui.label("Current Focus");
+                ui.vertical(|ui| {
+                    if let Some(focus) = focus.map(|o| o.as_displayobject()) {
+                        open_display_object_button(
+                            ui,
+                            context,
+                            messages,
+                            focus,
+                            &mut self.hovered_debug_rect,
+                        );
+                        ui.horizontal(|ui| {
+                            if ui.button("Clear").clicked() {
+                                focus_tracker.set(None, context);
+                            }
+                            if ui.button("Re-focus").clicked() {
+                                focus_tracker.set(None, context);
+                                focus_tracker.set(focus.as_interactive(), context);
+                            }
+                        });
+                    } else {
+                        ui.label("None");
                     }
                 });
                 ui.end_row();
+
+                let highlight = focus_tracker.highlight();
+                ui.label("Focus Highlight");
+                let highlight_text = match highlight {
+                    Highlight::Inactive => "Inactive",
+                    Highlight::ActiveHidden => "Active, Hidden",
+                    Highlight::ActiveVisible => "Active, Visible",
+                };
+                ui.label(highlight_text);
+                ui.end_row();
+            });
+
+        let tab_order = focus_tracker.tab_order(context);
+        let tab_order_suffix = tab_order
+            .first()
+            .map(|o| {
+                if o.tab_index().is_some() {
+                    "custom"
+                } else {
+                    "automatic"
+                }
+            })
+            .unwrap_or("empty");
+        CollapsingHeader::new(format!("Tab Order ({})", tab_order_suffix))
+            .id_source(ui.id().with("tab_order"))
+            .show(ui, |ui| {
+                Grid::new(ui.id().with("tab_order_grid"))
+                    .num_columns(3)
+                    .show(ui, |ui| {
+                        ui.label("#");
+                        ui.label("Object");
+                        ui.label("Actions");
+                        ui.label("Tab Index");
+                        ui.end_row();
+
+                        for (i, object) in tab_order.iter().enumerate() {
+                            if Some(*object) == focus {
+                                ui.label(format!("{}.*", i + 1));
+                            } else {
+                                ui.label(format!("{}.", i + 1));
+                            }
+                            open_display_object_button(
+                                ui,
+                                context,
+                                messages,
+                                object.as_displayobject(),
+                                &mut self.hovered_debug_rect,
+                            );
+                            if ui.button("Focus").clicked() {
+                                focus_tracker.set(Some(*object), context);
+                            }
+                            if let Some(tab_index) = object.tab_index() {
+                                ui.label(tab_index.to_string());
+                            } else {
+                                ui.label("(none)");
+                            }
+                            ui.end_row();
+                        }
+                    });
             });
     }
 
@@ -426,6 +801,14 @@ impl DisplayObjectWindow {
                 }
                 ui.end_row();
 
+                ui.label("Is Root");
+                if object.is_root() {
+                    ui.label("Yes");
+                } else {
+                    ui.label("No");
+                }
+                ui.end_row();
+
                 if let Some(other) = object.masker() {
                     ui.label("Masker");
                     open_display_object_button(
@@ -480,7 +863,7 @@ impl DisplayObjectWindow {
                 ui.checkbox(&mut is_visible, "Visible");
                 ui.end_row();
                 if is_visible != was_visible {
-                    object.set_visible(context.gc_context, is_visible);
+                    object.set_visible(context, is_visible);
                 }
 
                 ui.label("Blend mode");
@@ -503,28 +886,6 @@ impl DisplayObjectWindow {
                 ui.label(summary_color_transform(color_transform));
                 ui.end_row();
 
-                if let Some(obj) = object.as_interactive() {
-                    ui.label("Mouse enabled");
-                    ui.horizontal(|ui| {
-                        let mut enabled = obj.mouse_enabled();
-                        Checkbox::new(&mut enabled, "Enabled").ui(ui);
-                        if enabled != obj.mouse_enabled() {
-                            obj.set_mouse_enabled(context.gc_context, enabled);
-                        }
-                    });
-                    ui.end_row();
-
-                    ui.label("Double-click enabled");
-                    ui.horizontal(|ui| {
-                        let mut enabled = obj.double_click_enabled();
-                        Checkbox::new(&mut enabled, "Enabled").ui(ui);
-                        if enabled != obj.double_click_enabled() {
-                            obj.set_double_click_enabled(context.gc_context, enabled);
-                        }
-                    });
-                    ui.end_row();
-                }
-
                 if let Some(obj) = object.as_container() {
                     ui.label("Mouse children enabled");
                     ui.horizontal(|ui| {
@@ -533,6 +894,16 @@ impl DisplayObjectWindow {
                         if enabled != obj.raw_container().mouse_children() {
                             obj.raw_container_mut(context.gc_context)
                                 .set_mouse_children(enabled);
+                        }
+                    });
+                    ui.end_row();
+
+                    ui.label("Tab children enabled");
+                    ui.horizontal(|ui| {
+                        let mut enabled = obj.is_tab_children(context);
+                        Checkbox::new(&mut enabled, "Enabled").ui(ui);
+                        if enabled != obj.is_tab_children(context) {
+                            obj.set_tab_children(context, enabled);
                         }
                     });
                     ui.end_row();
@@ -806,7 +1177,10 @@ fn summary_color_transform_entry(name: &str, mult: Fixed8, add: i16) -> Option<S
 fn has_type_specific_tab(object: DisplayObject) -> bool {
     matches!(
         object,
-        DisplayObject::MovieClip(_) | DisplayObject::EditText(_) | DisplayObject::Stage(_)
+        DisplayObject::MovieClip(_)
+            | DisplayObject::EditText(_)
+            | DisplayObject::Bitmap(_)
+            | DisplayObject::Stage(_)
     )
 }
 
@@ -854,6 +1228,29 @@ fn blend_mode_name(mode: ExtendedBlendMode) -> &'static str {
         ExtendedBlendMode::Overlay => "Overlay",
         ExtendedBlendMode::HardLight => "HardLight",
         ExtendedBlendMode::Shader => "Shader",
+    }
+}
+
+fn optional_boolean_switch_value(value: Option<bool>) -> &'static str {
+    match value {
+        Some(true) => "Enabled",
+        Some(false) => "Disabled",
+        None => "Default",
+    }
+}
+
+fn color_edit_button(ui: &mut Ui, color: &mut Color) {
+    use egui::Color32;
+
+    let original_color32 = Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a);
+    let mut new_color32 = original_color32;
+    ui.color_edit_button_srgba(&mut new_color32);
+    if original_color32 != new_color32 {
+        let [r, g, b, a] = new_color32.to_srgba_unmultiplied();
+        color.r = r;
+        color.g = g;
+        color.b = b;
+        color.a = a;
     }
 }
 

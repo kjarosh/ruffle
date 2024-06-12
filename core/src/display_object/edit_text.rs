@@ -788,10 +788,10 @@ impl<'gc> EditText<'gc> {
                 .drawing
                 .draw_command(DrawCommand::LineTo(Point::new(width, Twips::ZERO)));
             write.drawing.draw_command(DrawCommand::LineTo(Point::ZERO));
-
-            drop(write);
-            self.invalidate_cached_bitmap(gc_context);
         }
+
+        drop(write);
+        self.invalidate_cached_bitmap(gc_context);
     }
 
     /// Internal padding between the bounds of the EditText and the text.
@@ -987,7 +987,7 @@ impl<'gc> EditText<'gc> {
             ..Default::default()
         });
 
-        let visible_selection = if edit_text.flags.contains(EditTextFlag::HAS_FOCUS) {
+        let visible_selection = if self.has_focus() {
             edit_text.selection
         } else {
             None
@@ -1256,11 +1256,17 @@ impl<'gc> EditText<'gc> {
 
     pub fn set_selection(self, selection: Option<TextSelection>, gc_context: &Mutation<'gc>) {
         let mut text = self.0.write(gc_context);
+        let old_selection = text.selection;
         if let Some(mut selection) = selection {
             selection.clamp(text.text_spans.text().len());
             text.selection = Some(selection);
         } else {
             text.selection = None;
+        }
+
+        if old_selection != text.selection {
+            drop(text);
+            self.invalidate_cached_bitmap(gc_context);
         }
     }
 
@@ -1304,7 +1310,8 @@ impl<'gc> EditText<'gc> {
             scroll as usize
         };
         let clamped = scroll_lines.clamp(1, self.maxscroll());
-        self.0.write(context.gc_context).scroll = clamped;
+        self.0.write(context.gc()).scroll = clamped;
+        self.invalidate_cached_bitmap(context.gc());
     }
 
     pub fn max_chars(self) -> i32 {
@@ -1413,191 +1420,221 @@ impl<'gc> EditText<'gc> {
         }
     }
 
+    pub fn is_text_control_applicable(
+        self,
+        control_code: TextControlCode,
+        context: &mut UpdateContext<'_, 'gc>,
+    ) -> bool {
+        if !self.is_editable() && control_code.is_edit_input() {
+            return false;
+        }
+
+        let Some(selection) = self.selection() else {
+            return false;
+        };
+
+        match control_code {
+            TextControlCode::SelectLeft
+            | TextControlCode::SelectLeftWord
+            | TextControlCode::SelectLeftLine
+            | TextControlCode::SelectLeftDocument
+            | TextControlCode::SelectRight
+            | TextControlCode::SelectRightWord
+            | TextControlCode::SelectRightLine
+            | TextControlCode::SelectRightDocument
+            | TextControlCode::SelectAll => self.is_selectable(),
+            TextControlCode::Copy | TextControlCode::Cut => {
+                !self.is_password() && !selection.is_caret()
+            }
+            TextControlCode::Paste => context.ui.clipboard_available(),
+            _ => true,
+        }
+    }
+
     pub fn text_control_input(
         self,
         control_code: TextControlCode,
         context: &mut UpdateContext<'_, 'gc>,
     ) {
-        if !self.is_editable() && control_code.is_edit_input() {
+        if !self.is_text_control_applicable(control_code, context) {
             return;
         }
 
-        if let Some(selection) = self.selection() {
-            let mut changed = false;
-            let is_selectable = self.is_selectable();
-            match control_code {
-                TextControlCode::Enter => {
-                    self.text_input(Self::INPUT_NEWLINE, context);
-                }
-                TextControlCode::MoveLeft
-                | TextControlCode::MoveLeftWord
-                | TextControlCode::MoveLeftLine
-                | TextControlCode::MoveLeftDocument => {
-                    let new_pos = if selection.is_caret() {
-                        self.find_new_position(control_code, selection.to)
-                    } else {
-                        selection.start()
-                    };
+        let Some(selection) = self.selection() else {
+            return;
+        };
+
+        let mut changed = false;
+        let is_selectable = self.is_selectable();
+        match control_code {
+            TextControlCode::Enter => {
+                self.text_input(Self::INPUT_NEWLINE, context);
+            }
+            TextControlCode::MoveLeft
+            | TextControlCode::MoveLeftWord
+            | TextControlCode::MoveLeftLine
+            | TextControlCode::MoveLeftDocument => {
+                let new_pos = if selection.is_caret() {
+                    self.find_new_position(control_code, selection.to)
+                } else {
+                    selection.start()
+                };
+                self.set_selection(
+                    Some(TextSelection::for_position(new_pos)),
+                    context.gc_context,
+                );
+            }
+            TextControlCode::MoveRight
+            | TextControlCode::MoveRightWord
+            | TextControlCode::MoveRightLine
+            | TextControlCode::MoveRightDocument => {
+                let new_pos = if selection.is_caret() && selection.to < self.text().len() {
+                    self.find_new_position(control_code, selection.to)
+                } else {
+                    selection.end()
+                };
+                self.set_selection(
+                    Some(TextSelection::for_position(new_pos)),
+                    context.gc_context,
+                );
+            }
+            TextControlCode::SelectLeft
+            | TextControlCode::SelectLeftWord
+            | TextControlCode::SelectLeftLine
+            | TextControlCode::SelectLeftDocument => {
+                if selection.to > 0 {
+                    let new_pos = self.find_new_position(control_code, selection.to);
                     self.set_selection(
-                        Some(TextSelection::for_position(new_pos)),
+                        Some(TextSelection::for_range(selection.from, new_pos)),
                         context.gc_context,
                     );
                 }
-                TextControlCode::MoveRight
-                | TextControlCode::MoveRightWord
-                | TextControlCode::MoveRightLine
-                | TextControlCode::MoveRightDocument => {
-                    let new_pos = if selection.is_caret() && selection.to < self.text().len() {
-                        self.find_new_position(control_code, selection.to)
-                    } else {
-                        selection.end()
-                    };
+            }
+            TextControlCode::SelectRight
+            | TextControlCode::SelectRightWord
+            | TextControlCode::SelectRightLine
+            | TextControlCode::SelectRightDocument => {
+                if selection.to < self.text().len() {
+                    let new_pos = self.find_new_position(control_code, selection.to);
                     self.set_selection(
-                        Some(TextSelection::for_position(new_pos)),
+                        Some(TextSelection::for_range(selection.from, new_pos)),
                         context.gc_context,
+                    )
+                }
+            }
+            TextControlCode::SelectAll => {
+                self.set_selection(
+                    Some(TextSelection::for_range(0, self.text().len())),
+                    context.gc_context,
+                );
+            }
+            TextControlCode::Copy => {
+                let text = &self.text()[selection.start()..selection.end()];
+                context.ui.set_clipboard_content(text.to_string());
+            }
+            TextControlCode::Paste => 'paste: {
+                let text = context.ui.clipboard_content();
+                if text.is_empty() {
+                    // When the clipboard is empty, nothing is pasted
+                    // and the already selected text is not removed.
+                    // Note that if the clipboard is not empty, but does not have
+                    // any allowed characters, the selected text is removed.
+                    break 'paste;
+                }
+
+                let mut text = self.0.read().restrict.filter_allowed(&text);
+
+                if text.len() > self.available_chars() && self.available_chars() > 0 {
+                    text = text[0..self.available_chars()].to_owned();
+                }
+
+                if text.len() <= self.available_chars() {
+                    self.replace_text(
+                        selection.start(),
+                        selection.end(),
+                        &WString::from_utf8(&text),
+                        context,
                     );
-                }
-                TextControlCode::SelectLeft
-                | TextControlCode::SelectLeftWord
-                | TextControlCode::SelectLeftLine
-                | TextControlCode::SelectLeftDocument => {
-                    if is_selectable && selection.to > 0 {
-                        let new_pos = self.find_new_position(control_code, selection.to);
-                        self.set_selection(
-                            Some(TextSelection::for_range(selection.from, new_pos)),
-                            context.gc_context,
-                        );
-                    }
-                }
-                TextControlCode::SelectRight
-                | TextControlCode::SelectRightWord
-                | TextControlCode::SelectRightLine
-                | TextControlCode::SelectRightDocument => {
-                    if is_selectable && selection.to < self.text().len() {
-                        let new_pos = self.find_new_position(control_code, selection.to);
-                        self.set_selection(
-                            Some(TextSelection::for_range(selection.from, new_pos)),
-                            context.gc_context,
-                        )
-                    }
-                }
-                TextControlCode::SelectAll => {
+                    let new_pos = selection.start() + text.len();
                     if is_selectable {
                         self.set_selection(
-                            Some(TextSelection::for_range(0, self.text().len())),
+                            Some(TextSelection::for_position(new_pos)),
+                            context.gc_context,
+                        );
+                    } else {
+                        self.set_selection(
+                            Some(TextSelection::for_position(self.text().len())),
                             context.gc_context,
                         );
                     }
+                    changed = true;
                 }
-                TextControlCode::Copy => {
-                    if !selection.is_caret() {
-                        let text = &self.text()[selection.start()..selection.end()];
-                        context.ui.set_clipboard_content(text.to_string());
-                    }
-                }
-                TextControlCode::Paste => {
-                    let text = context.ui.clipboard_content();
-                    let mut text = self.0.read().restrict.filter_allowed(&text);
+            }
+            TextControlCode::Cut => {
+                let text = &self.text()[selection.start()..selection.end()];
+                context.ui.set_clipboard_content(text.to_string());
 
-                    if text.len() > self.available_chars() && self.available_chars() > 0 {
-                        text = text[0..self.available_chars()].to_owned();
-                    }
-
-                    if text.len() <= self.available_chars() {
-                        self.replace_text(
-                            selection.start(),
-                            selection.end(),
-                            &WString::from_utf8(&text),
-                            context,
-                        );
-                        let new_pos = selection.start() + text.len();
-                        if is_selectable {
-                            self.set_selection(
-                                Some(TextSelection::for_position(new_pos)),
-                                context.gc_context,
-                            );
-                        } else {
-                            self.set_selection(
-                                Some(TextSelection::for_position(self.text().len())),
-                                context.gc_context,
-                            );
-                        }
-                        changed = true;
-                    }
-                }
-                TextControlCode::Cut => {
-                    if !selection.is_caret() {
-                        let text = &self.text()[selection.start()..selection.end()];
-                        context.ui.set_clipboard_content(text.to_string());
-
-                        self.replace_text(
-                            selection.start(),
-                            selection.end(),
-                            WStr::empty(),
-                            context,
-                        );
-                        if is_selectable {
-                            self.set_selection(
-                                Some(TextSelection::for_position(selection.start())),
-                                context.gc_context,
-                            );
-                        } else {
-                            self.set_selection(
-                                Some(TextSelection::for_position(self.text().len())),
-                                context.gc_context,
-                            );
-                        }
-                        changed = true;
-                    }
-                }
-                TextControlCode::Backspace
-                | TextControlCode::BackspaceWord
-                | TextControlCode::Delete
-                | TextControlCode::DeleteWord
-                    if !selection.is_caret() =>
-                {
-                    // Backspace or delete with multiple characters selected
-                    self.replace_text(selection.start(), selection.end(), WStr::empty(), context);
+                self.replace_text(selection.start(), selection.end(), WStr::empty(), context);
+                if is_selectable {
                     self.set_selection(
                         Some(TextSelection::for_position(selection.start())),
                         context.gc_context,
                     );
+                } else {
+                    self.set_selection(
+                        Some(TextSelection::for_position(self.text().len())),
+                        context.gc_context,
+                    );
+                }
+                changed = true;
+            }
+            TextControlCode::Backspace
+            | TextControlCode::BackspaceWord
+            | TextControlCode::Delete
+            | TextControlCode::DeleteWord
+                if !selection.is_caret() =>
+            {
+                // Backspace or delete with multiple characters selected
+                self.replace_text(selection.start(), selection.end(), WStr::empty(), context);
+                self.set_selection(
+                    Some(TextSelection::for_position(selection.start())),
+                    context.gc_context,
+                );
+                changed = true;
+            }
+            TextControlCode::Backspace | TextControlCode::BackspaceWord => {
+                // Backspace with caret
+                if selection.start() > 0 {
+                    // Delete previous character(s)
+                    let start = self.find_new_position(control_code, selection.start());
+                    self.replace_text(start, selection.start(), WStr::empty(), context);
+                    self.set_selection(
+                        Some(TextSelection::for_position(start)),
+                        context.gc_context,
+                    );
                     changed = true;
                 }
-                TextControlCode::Backspace | TextControlCode::BackspaceWord => {
-                    // Backspace with caret
-                    if selection.start() > 0 {
-                        // Delete previous character(s)
-                        let start = self.find_new_position(control_code, selection.start());
-                        self.replace_text(start, selection.start(), WStr::empty(), context);
-                        self.set_selection(
-                            Some(TextSelection::for_position(start)),
-                            context.gc_context,
-                        );
-                        changed = true;
-                    }
-                }
-                TextControlCode::Delete | TextControlCode::DeleteWord => {
-                    // Delete with caret
-                    if selection.end() < self.text_length() {
-                        // Delete next character(s)
-                        let end = self.find_new_position(control_code, selection.start());
-                        self.replace_text(selection.start(), end, WStr::empty(), context);
-                        // No need to change selection, reset it to prevent caret from blinking
-                        self.reset_selection_blinking(context.gc_context);
-                        changed = true;
-                    }
+            }
+            TextControlCode::Delete | TextControlCode::DeleteWord => {
+                // Delete with caret
+                if selection.end() < self.text_length() {
+                    // Delete next character(s)
+                    let end = self.find_new_position(control_code, selection.start());
+                    self.replace_text(selection.start(), end, WStr::empty(), context);
+                    // No need to change selection, reset it to prevent caret from blinking
+                    self.reset_selection_blinking(context.gc_context);
+                    changed = true;
                 }
             }
-            if changed {
-                let mut activation = Avm1Activation::from_nothing(
-                    context.reborrow(),
-                    ActivationIdentifier::root("[Propagate Text Binding]"),
-                    self.into(),
-                );
-                self.propagate_text_binding(&mut activation);
-                self.on_changed(&mut activation);
-            }
+        }
+        if changed {
+            let mut activation = Avm1Activation::from_nothing(
+                context.reborrow(),
+                ActivationIdentifier::root("[Propagate Text Binding]"),
+                self.into(),
+            );
+            self.propagate_text_binding(&mut activation);
+            self.on_changed(&mut activation);
         }
     }
 
@@ -2114,21 +2151,6 @@ impl<'gc> TDisplayObject<'gc> for EditText<'gc> {
         self.0.write(context.gc_context).object = Some(to.into());
     }
 
-    fn set_parent(&self, context: &mut UpdateContext<'_, 'gc>, parent: Option<DisplayObject<'gc>>) {
-        let had_parent = self.parent().is_some();
-        self.base_mut(context.gc_context)
-            .set_parent_ignoring_orphan_list(parent);
-        let has_parent = self.parent().is_some();
-
-        if self.movie().is_action_script_3() && had_parent && !has_parent {
-            let had_focus = self.0.read().flags.contains(EditTextFlag::HAS_FOCUS);
-            if had_focus {
-                let tracker = context.focus_tracker;
-                tracker.set(None, context);
-            }
-        }
-    }
-
     fn self_bounds(&self) -> Rectangle<Twips> {
         self.0.read().bounds.clone()
     }
@@ -2237,7 +2259,7 @@ impl<'gc> TDisplayObject<'gc> for EditText<'gc> {
         });
 
         if edit_text.layout.is_empty() && !edit_text.flags.contains(EditTextFlag::READ_ONLY) {
-            let visible_selection = if edit_text.flags.contains(EditTextFlag::HAS_FOCUS) {
+            let visible_selection = if self.has_focus() {
                 edit_text.selection
             } else {
                 None
@@ -2275,11 +2297,7 @@ impl<'gc> TDisplayObject<'gc> for EditText<'gc> {
     }
 
     fn avm1_unload(&self, context: &mut UpdateContext<'_, 'gc>) {
-        let had_focus = self.0.read().flags.contains(EditTextFlag::HAS_FOCUS);
-        if had_focus {
-            let tracker = context.focus_tracker;
-            tracker.set(None, context);
-        }
+        self.drop_focus(context);
 
         if let Some(node) = self.maskee() {
             node.set_masker(context.gc_context, None, true);
@@ -2327,7 +2345,9 @@ impl<'gc> TInteractiveObject<'gc> for EditText<'gc> {
         event: ClipEvent,
     ) -> ClipEventResult {
         match event {
-            ClipEvent::Press | ClipEvent::MouseWheel { .. } => ClipEventResult::Handled,
+            ClipEvent::Press | ClipEvent::MouseWheel { .. } | ClipEvent::MouseMove => {
+                ClipEventResult::Handled
+            }
             _ => ClipEventResult::NotHandled,
         }
     }
@@ -2352,43 +2372,60 @@ impl<'gc> TInteractiveObject<'gc> for EditText<'gc> {
             return ClipEventResult::Handled;
         }
 
-        if self.is_editable() || self.is_selectable() {
-            let tracker = context.focus_tracker;
-            tracker.set(Some(self.into()), context);
-        }
-
-        // We can't hold self as any link may end up modifying this object, so pull the info out
-        let mut link_to_open = None;
-
-        if let Some(position) = self.screen_position_to_index(*context.mouse_position) {
-            self.0.write(context.gc_context).selection =
-                Some(TextSelection::for_position(position));
-
-            if let Some((span_index, _)) =
-                self.0.read().text_spans.resolve_position_as_span(position)
-            {
-                link_to_open = self
-                    .0
-                    .read()
-                    .text_spans
-                    .span(span_index)
-                    .map(|s| (s.url.clone(), s.target.clone()));
+        if let ClipEvent::Press = event {
+            if self.is_editable() || self.is_selectable() {
+                let tracker = context.focus_tracker;
+                tracker.set(Some(self.into()), context);
             }
-        } else {
-            self.0.write(context.gc_context).selection =
-                Some(TextSelection::for_position(self.text_length()));
+
+            // We can't hold self as any link may end up modifying this object, so pull the info out
+            let mut link_to_open = None;
+
+            if let Some(position) = self.screen_position_to_index(*context.mouse_position) {
+                self.set_selection(Some(TextSelection::for_position(position)), context.gc());
+
+                if let Some((span_index, _)) =
+                    self.0.read().text_spans.resolve_position_as_span(position)
+                {
+                    link_to_open = self
+                        .0
+                        .read()
+                        .text_spans
+                        .span(span_index)
+                        .map(|s| (s.url.clone(), s.target.clone()));
+                }
+            } else {
+                self.set_selection(
+                    Some(TextSelection::for_position(self.text_length())),
+                    context.gc(),
+                );
+            }
+
+            if let Some((url, target)) = link_to_open {
+                if !url.is_empty() {
+                    // TODO: This fires on mouse DOWN but it should be mouse UP...
+                    // but only if it went down in the same span.
+                    // Needs more advanced focus handling than we have at time of writing this comment.
+                    self.open_url(context, &url, &target);
+                }
+            }
+
+            return ClipEventResult::Handled;
         }
 
-        if let Some((url, target)) = link_to_open {
-            if !url.is_empty() {
-                // TODO: This fires on mouse DOWN but it should be mouse UP...
-                // but only if it went down in the same span.
-                // Needs more advanced focus handling than we have at time of writing this comment.
-                self.open_url(context, &url, &target);
+        if let ClipEvent::MouseMove = event {
+            // If a mouse has moved and this EditTest is pressed, we need to update the selection.
+            if InteractiveObject::option_ptr_eq(context.mouse_data.pressed, self.as_interactive()) {
+                if let Some(mut selection) = self.selection() {
+                    if let Some(position) = self.screen_position_to_index(*context.mouse_position) {
+                        selection.to = position;
+                        self.set_selection(Some(selection), context.gc());
+                    }
+                }
             }
         }
 
-        ClipEventResult::Handled
+        ClipEventResult::NotHandled
     }
 
     fn mouse_pick_avm1(
@@ -2459,11 +2496,9 @@ impl<'gc> TInteractiveObject<'gc> for EditText<'gc> {
         focused: bool,
         _other: Option<InteractiveObject<'gc>>,
     ) {
-        let is_action_script_3 = self.movie().is_action_script_3();
-        let mut text = self.0.write(context.gc_context);
-        text.flags.set(EditTextFlag::HAS_FOCUS, focused);
-        if !focused && !is_action_script_3 {
-            text.selection = None;
+        let is_avm1 = !self.movie().is_action_script_3();
+        if !focused && is_avm1 {
+            self.set_selection(None, context.gc_context);
         }
     }
 
@@ -2480,11 +2515,7 @@ impl<'gc> TInteractiveObject<'gc> for EditText<'gc> {
         self.tab_enabled(context)
     }
 
-    fn tab_enabled_avm1(&self, context: &mut UpdateContext<'_, 'gc>) -> bool {
-        self.get_avm1_boolean_property(context, "tabEnabled", |_| true)
-    }
-
-    fn tab_enabled_avm2_default(&self, _context: &mut UpdateContext<'_, 'gc>) -> bool {
+    fn tab_enabled_default(&self, _context: &mut UpdateContext<'_, 'gc>) -> bool {
         self.is_editable()
     }
 }
@@ -2494,7 +2525,6 @@ bitflags::bitflags! {
     struct EditTextFlag: u16 {
         const FIRING_VARIABLE_BINDING = 1 << 0;
         const HAS_BACKGROUND = 1 << 1;
-        const HAS_FOCUS = 1 << 2;
 
         // The following bits need to match `swf::EditTextFlag`.
         const READ_ONLY = 1 << 3;
@@ -2529,6 +2559,14 @@ pub struct TextSelection {
     /// The time the caret should begin blinking
     blink_epoch: DateTime<Utc>,
 }
+
+impl PartialEq for TextSelection {
+    fn eq(&self, other: &Self) -> bool {
+        self.from == other.from && self.to == other.to
+    }
+}
+
+impl Eq for TextSelection {}
 
 /// Information about the start and end y-coordinates of a given line of text
 #[derive(Copy, Clone, Debug)]

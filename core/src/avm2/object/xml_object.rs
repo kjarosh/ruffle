@@ -1,15 +1,15 @@
 //! Object representation for XML objects
 
 use crate::avm2::activation::Activation;
-use crate::avm2::api_version::ApiVersion;
-use crate::avm2::e4x::{string_to_multiname, E4XNode, E4XNodeKind};
+use crate::avm2::e4x::{string_to_multiname, E4XNamespace, E4XNode, E4XNodeKind};
 use crate::avm2::error::make_error_1087;
 use crate::avm2::multiname::NamespaceSet;
 use crate::avm2::object::script_object::ScriptObjectData;
-use crate::avm2::object::{ClassObject, Object, ObjectPtr, TObject, XmlListObject};
+use crate::avm2::object::{
+    ClassObject, NamespaceObject, Object, ObjectPtr, TObject, XmlListObject,
+};
 use crate::avm2::string::AvmString;
 use crate::avm2::value::Value;
-use crate::avm2::Namespace;
 use crate::avm2::{Error, Multiname};
 use core::fmt;
 use gc_arena::{Collect, GcCell, GcWeakCell, Mutation};
@@ -158,15 +158,33 @@ impl<'gc> XmlObject<'gc> {
         self.0.read().node.local_name()
     }
 
-    pub fn namespace(&self, activation: &mut Activation<'_, 'gc>) -> Namespace<'gc> {
+    pub fn namespace_object(
+        &self,
+        activation: &mut Activation<'_, 'gc>,
+        in_scope_ns: &[E4XNamespace<'gc>],
+    ) -> Result<NamespaceObject<'gc>, Error<'gc>> {
+        // 13.3.5.4 [[GetNamespace]] ( [ InScopeNamespaces ] )
+        // 1. If q.uri is null, throw a TypeError exception
+        // NOTE: As stated in the spec, this not really possible
         match self.0.read().node.namespace() {
-            Some(ns) => Namespace::package(
-                ns,
-                ApiVersion::AllVersions,
-                &mut activation.context.borrow_gc(),
-            ),
-            None => activation.avm2().public_namespace_base_version,
+            None => E4XNamespace::default_namespace(),
+            Some(ns) => {
+                // 2. If InScopeNamespaces was not specified, let InScopeNamespaces = { }
+                // 3. Find a Namespace ns in InScopeNamespaces, such that ns.uri == q.uri. If more than one such
+                //    Namespace ns exists, the implementation may choose one of the matching Namespaces arbitrarily.
+                // NOTE: Flash just uses whatever namespace URI matches first. They don't do anything with the prefix.
+                if let Some(ns) = in_scope_ns.iter().find(|scope_ns| scope_ns.uri == ns.uri) {
+                    *ns
+                } else {
+                    // 4. If no such namespace ns exists
+                    //      a. Let ns be a new namespace created as if by calling the constructor new Namespace(q.uri)
+                    // NOTE: We could preserve the prefix here, but Flash doesn't bother.
+                    E4XNamespace::new_uri(ns.uri)
+                }
+            }
         }
+        // 5. Return ns
+        .as_namespace_object(activation)
     }
 
     pub fn matches_name(&self, multiname: &Multiname<'gc>) -> bool {
@@ -311,6 +329,7 @@ impl<'gc> TObject<'gc> for XmlObject<'gc> {
         let matched_children = if let E4XNodeKind::Element {
             children,
             attributes,
+            ..
         } = &*read.node.kind()
         {
             let search_children = if name.is_attribute() {
@@ -560,7 +579,7 @@ impl<'gc> TObject<'gc> for XmlObject<'gc> {
                 // 12.b.iii. Create a new XML object y with y.[[Name]] = name, y.[[Class]] = "element" and y.[[Parent]] = x
                 let node = E4XNode::element(
                     activation.gc(),
-                    name.explicit_namespace(),
+                    name.explicit_namespace().map(E4XNamespace::new_uri),
                     name.local_name().unwrap(),
                     Some(*self_node),
                 );

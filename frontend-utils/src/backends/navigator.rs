@@ -9,7 +9,7 @@ use async_net::TcpStream;
 use futures::future::select;
 use futures::{AsyncReadExt, AsyncWriteExt};
 use futures_lite::FutureExt;
-use reqwest::Proxy;
+use reqwest::{cookie, header, Proxy};
 use ruffle_core::backend::navigator::{
     async_return, create_fetch_error, ErrorResponse, NavigationMethod, NavigatorBackend,
     OpenURLMode, OwnedFuture, Request, SocketMode, SuccessResponse,
@@ -70,6 +70,8 @@ impl<F: FutureSpawner, I: NavigatorInterface> ExternalNavigatorBackend<F, I> {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         mut base_url: Url,
+        referer: Option<Url>,
+        cookie: Option<String>,
         future_spawner: F,
         proxy: Option<Url>,
         upgrade_to_https: bool,
@@ -79,7 +81,26 @@ impl<F: FutureSpawner, I: NavigatorInterface> ExternalNavigatorBackend<F, I> {
         content: Rc<PlayingContent>,
         interface: I,
     ) -> Self {
-        let mut builder = reqwest::ClientBuilder::new().cookie_store(true);
+        let mut builder = reqwest::ClientBuilder::new()
+            .cookie_store(true)
+            .user_agent(concat!(
+                "Ruffle/",
+                env!("CARGO_PKG_VERSION"),
+                " (https://ruffle.rs)"
+            ));
+
+        if let Some(referer) = referer {
+            let mut headers = header::HeaderMap::new();
+            headers.insert(header::REFERER, referer.to_string().parse().unwrap());
+            builder = builder.default_headers(headers);
+        }
+
+        if let Some(cookie) = cookie {
+            let cookie_jar = cookie::Jar::default();
+            cookie_jar.add_cookie_str(&cookie, &base_url);
+            let cookie_store = std::sync::Arc::new(cookie_jar);
+            builder = builder.cookie_provider(cookie_store)
+        }
 
         if let Some(proxy) = proxy {
             match Proxy::all(proxy.clone()) {
@@ -535,6 +556,8 @@ mod tests {
         let url = Url::parse("https://example.com/path/").unwrap();
         ExternalNavigatorBackend::new(
             url.clone(),
+            None,
+            None,
             TestFutureSpawner,
             None,
             false,

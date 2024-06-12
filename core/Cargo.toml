@@ -13,7 +13,7 @@ workspace = true
 [dependencies]
 linkme = { version = "0.3", optional = true }
 byteorder = "1.5"
-bitstream-io = "2.2.0"
+bitstream-io = "2.3.0"
 flate2 = { workspace = true }
 fnv = "1.0.7"
 gc-arena = { package = "ruffle_gc_arena", path = "../ruffle_gc_arena" }
@@ -42,7 +42,7 @@ rand = { version = "0.8.5", features = ["std", "small_rng"], default-features = 
 serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 nellymoser-rs = { git = "https://github.com/ruffle-rs/nellymoser", rev = "754b1184037aa9952a907107284fb73897e26adc", optional = true }
-regress = "0.9"
+regress = "0.10"
 flash-lso = { git = "https://github.com/ruffle-rs/rust-flash-lso", rev = "2f770555ea49c6db49c57c1dd46c7cc686e8dacc" }
 lzma-rs = {version = "0.3.0", optional = true }
 dasp = { version = "0.11.0", features = ["interpolate", "interpolate-linear", "signal"], optional = true }
@@ -55,18 +55,18 @@ hashbrown = { version = "0.14.5", features = ["raw"] }
 scopeguard = "1.2.0"
 fluent-templates = "0.9.4"
 egui = { workspace = true, optional = true }
-egui_extras = { version = "0.27.2", optional = true }
+egui_extras = { git = "https://github.com/emilk/egui.git", rev = "738ea75453567c5f17a543e68aec8c48097cae7b", optional = true }
 png = { version = "0.17.13", optional = true }
 flv-rs = { path = "../flv" }
 async-channel = { workspace = true }
-jpegxr = { git = "https://github.com/ruffle-rs/jpegxr", branch = "ruffle", optional = true }
+jpegxr = { git = "https://github.com/ruffle-rs/jpegxr", rev = "db88651220688d2883a90d5477048071507b0493", optional = true }
 image = { workspace = true, features = ["tiff"] }
 enum-map = { workspace = true }
-ttf-parser = "0.20"
+ttf-parser = "0.21"
 num-bigint = "0.4"
 unic-segment = "0.9.0"
 id3 = "1.13.1"
-either = "1.11.0"
+either = "1.12.0"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies.futures]
 workspace = true
@@ -88,6 +88,7 @@ default_compatibility_rules = []
 egui = ["dep:egui", "dep:egui_extras", "png"]
 jpegxr = ["dep:jpegxr", "lzma"]
 default_font = []
+test_only_as3 = []
 
 [build-dependencies]
 build_playerglobal = { path = "build_playerglobal" }

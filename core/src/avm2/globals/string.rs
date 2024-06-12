@@ -172,13 +172,15 @@ fn concat<'gc>(
     this: Object<'gc>,
     args: &[Value<'gc>],
 ) -> Result<Value<'gc>, Error<'gc>> {
-    let mut ret = WString::from(Value::from(this).coerce_to_string(activation)?.as_wstr());
+    let lhs = Value::from(this).coerce_to_string(activation)?;
+
+    let mut ret = lhs;
     for arg in args {
         let s = arg.coerce_to_string(activation)?;
-        ret.push_str(&s);
+        ret = AvmString::concat(activation.context.gc_context, ret, s);
     }
 
-    Ok(AvmString::new(activation.context.gc_context, ret).into())
+    Ok(ret.into())
 }
 
 /// Implements `String.fromCharCode`
@@ -533,6 +535,12 @@ fn substr<'gc>(
         .unwrap_or(&Value::Number(0x7fffffff as f64))
         .coerce_to_number(activation)?;
 
+    let len = if len.is_nan() {
+        0.0
+    } else {
+        len.min(0x7fffffff as f64)
+    };
+
     let len = if len < 0. {
         if len.is_infinite() {
             0.
@@ -549,11 +557,7 @@ fn substr<'gc>(
         len
     };
 
-    let end_index = if len == f64::INFINITY {
-        this.len()
-    } else {
-        this.len().min(start_index + len as usize)
-    };
+    let end_index = this.len().min(start_index + len as usize);
 
     Ok(activation
         .context
@@ -665,6 +669,20 @@ fn to_upper_case<'gc>(
     .into())
 }
 
+#[cfg(feature = "test_only_as3")]
+fn is_dependent<'gc>(
+    _activation: &mut Activation<'_, 'gc>,
+    this: Object<'gc>,
+    _args: &[Value<'gc>],
+) -> Result<Value<'gc>, Error<'gc>> {
+    if let Some(prim) = this.as_primitive() {
+        if let Value::String(s) = *prim {
+            return Ok(s.owner().is_some().into());
+        }
+    }
+    panic!();
+}
+
 /// Construct `String`'s class.
 pub fn create_class<'gc>(activation: &mut Activation<'_, 'gc>) -> Class<'gc> {
     let mc = activation.context.gc_context;
@@ -699,6 +717,23 @@ pub fn create_class<'gc>(activation: &mut Activation<'_, 'gc>) -> Class<'gc> {
         PUBLIC_INSTANCE_AND_PROTO_METHODS,
     );
 
+    #[cfg(feature = "test_only_as3")]
+    {
+        use crate::avm2::api_version::ApiVersion;
+        use crate::avm2::namespace::Namespace;
+
+        const TEST_METHODS: &[(&str, NativeMethodImpl)] = &[("isDependent", is_dependent)];
+        class.define_builtin_instance_methods(
+            mc,
+            Namespace::package(
+                "__ruffle__",
+                ApiVersion::AllVersions,
+                &mut activation.borrow_gc(),
+            ),
+            TEST_METHODS,
+        );
+    }
+
     const CONSTANTS_INT: &[(&str, i32)] = &[("length", 1)];
     class.define_constant_int_class_traits(
         activation.avm2().public_namespace_base_version,
@@ -714,6 +749,11 @@ pub fn create_class<'gc>(activation: &mut Activation<'_, 'gc>) -> Class<'gc> {
         activation.avm2().public_namespace_base_version,
         PUBLIC_CLASS_METHODS,
     );
+
+    class.mark_traits_loaded(activation.context.gc_context);
+    class
+        .init_vtable(&mut activation.context)
+        .expect("Native class's vtable should initialize");
 
     class
 }

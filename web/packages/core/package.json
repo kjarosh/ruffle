@@ -14,10 +14,10 @@
         "build": "tsc --build --force",
         "postbuild": "node tools/set_version.js && node tools/bundle_texts.js",
         "docs": "typedoc",
-        "test": "cross-env TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha"
+        "test": "cross-env TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha",
+        "checkTypes": "tsc --noemit"
     },
     "dependencies": {
-        "jszip": "^3.10.1",
         "wasm-feature-detect": "^1.6.1"
     },
     "devDependencies": {
@@ -26,9 +26,9 @@
         "@tsconfig/strictest": "^2.0.5",
         "@types/mocha": "^10.0.6",
         "eslint": "^8.57.0",
-        "eslint-plugin-jsdoc": "^48.2.3",
+        "eslint-plugin-jsdoc": "^48.2.9",
         "mocha": "^10.4.0",
-        "replace-in-file": "^7.1.0",
+        "replace-in-file": "^7.2.0",
         "ts-node": "^10.9.2",
         "typedoc": "^0.25.13",
         "typescript": "^5.4.5"

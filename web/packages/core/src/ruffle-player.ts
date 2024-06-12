@@ -1,5 +1,5 @@
-import type { Ruffle } from "../dist/ruffle_web";
-import { loadRuffle } from "./load-ruffle";
+import type { RuffleHandle, ZipWriter } from "../dist/ruffle_web";
+import { createRuffleBuilder } from "./load-ruffle";
 import { applyStaticStyles, ruffleShadowTemplate } from "./shadow-template";
 import { lookupElement } from "./register-element";
 import { DEFAULT_CONFIG } from "./config";
@@ -15,8 +15,8 @@ import type { MovieMetadata } from "./movie-metadata";
 import { swfFileName } from "./swf-utils";
 import { buildInfo } from "./build-info";
 import { text, textAsParagraphs } from "./i18n";
-import JSZip from "jszip";
 import { isExtension } from "./current-script";
+import { configureBuilder } from "./internal/builder";
 
 const RUFFLE_ORIGIN = "https://ruffle.rs";
 const DIMENSION_REGEX = /^\s*(\d+(\.\d+)?(%)?)/;
@@ -69,8 +69,11 @@ interface ContextMenuItem {
      * The function to call when clicked.
      *
      * @param event The mouse event that triggered the click.
+     *
+     * @returns Either `void` in case the callback is synchronous,
+     *          or `Promise<void>` when the callback is asynchronous.
      */
-    onClick: (event: MouseEvent) => void;
+    onClick: (event: MouseEvent) => void | Promise<void>;
 
     /**
      * Whether this item is clickable.
@@ -146,6 +149,7 @@ export class RufflePlayer extends HTMLElement {
     private readonly volumeControls: HTMLDivElement;
     private readonly videoModal: HTMLDivElement;
     private readonly hardwareAccelerationModal: HTMLDivElement;
+    private readonly clipboardModal: HTMLDivElement;
 
     private readonly contextMenuOverlay: HTMLElement;
     // Firefox has a read-only "contextMenu" property,
@@ -165,7 +169,8 @@ export class RufflePlayer extends HTMLElement {
     private loadedConfig?: URLLoadOptions | DataLoadOptions;
 
     private swfUrl?: URL;
-    private instance: Ruffle | null;
+    private instance: RuffleHandle | null;
+    private newZipWriter: (() => ZipWriter) | null;
     private lastActivePlayingState: boolean;
 
     private _metadata: MovieMetadata | null;
@@ -270,10 +275,14 @@ export class RufflePlayer extends HTMLElement {
         this.volumeControls = <HTMLDivElement>(
             this.shadow.getElementById("volume-controls-modal")
         );
+        this.clipboardModal = <HTMLDivElement>(
+            this.shadow.getElementById("clipboard-modal")
+        );
         this.addModalJavaScript(this.saveManager);
         this.addModalJavaScript(this.volumeControls);
         this.addModalJavaScript(this.videoModal);
         this.addModalJavaScript(this.hardwareAccelerationModal);
+        this.addModalJavaScript(this.clipboardModal);
 
         this.volumeSettings = new VolumeControls(false, 100);
         this.addVolumeControlsJavaScript(this.volumeControls);
@@ -332,6 +341,7 @@ export class RufflePlayer extends HTMLElement {
         );
 
         this.instance = null;
+        this.newZipWriter = null;
         this.onFSCommand = null;
 
         this._readyState = ReadyState.HaveNothing;
@@ -672,9 +682,8 @@ export class RufflePlayer extends HTMLElement {
                 'The configuration option contextMenu no longer takes a boolean. Use "on", "off", or "rightClickOnly".',
             );
         }
-        this.instance = await loadRuffle(
-            this.container,
-            this,
+
+        const [builder, zipWriterClass] = await createRuffleBuilder(
             this.loadedConfig || {},
             this.onRuffleDownloadProgress.bind(this),
         ).catch((e) => {
@@ -715,12 +724,15 @@ export class RufflePlayer extends HTMLElement {
             this.panic(e);
             throw e;
         });
+        this.newZipWriter = zipWriterClass;
+        configureBuilder(builder, this.loadedConfig || {});
+        builder.setVolume(this.volumeSettings.get_volume());
 
         if (this.loadedConfig?.fontSources) {
             for (const url of this.loadedConfig.fontSources) {
                 try {
                     const response = await fetch(url);
-                    this.instance!.add_font(
+                    builder.addFont(
                         url,
                         new Uint8Array(await response.arrayBuffer()),
                     );
@@ -733,26 +745,22 @@ export class RufflePlayer extends HTMLElement {
             }
         }
 
-        if (this.loadedConfig?.defaultFonts?.sans) {
-            this.instance!.set_default_font(
-                "sans",
-                this.loadedConfig?.defaultFonts.sans,
-            );
-        }
-        if (this.loadedConfig?.defaultFonts?.serif) {
-            this.instance!.set_default_font(
-                "serif",
-                this.loadedConfig?.defaultFonts.serif,
-            );
-        }
-        if (this.loadedConfig?.defaultFonts?.typewriter) {
-            this.instance!.set_default_font(
-                "typewriter",
-                this.loadedConfig?.defaultFonts.typewriter,
-            );
+        for (const key in this.loadedConfig?.defaultFonts) {
+            const names = (
+                this.loadedConfig.defaultFonts as {
+                    [key: string]: Array<string>;
+                }
+            )[key];
+            if (names) {
+                builder.setDefaultFont(key, names);
+            }
         }
 
-        this.instance!.set_volume(this.volumeSettings.get_volume());
+        this.instance = await builder.build(this.container, this).catch((e) => {
+            console.error(`Serious error loading Ruffle: ${e}`);
+            this.panic(e);
+            throw e;
+        });
 
         this.rendererDebugInfo = this.instance!.renderer_debug_info();
 
@@ -767,7 +775,7 @@ export class RufflePlayer extends HTMLElement {
         }
 
         const actuallyUsedRendererName = this.instance!.renderer_name();
-        const constructor = <typeof Ruffle>this.instance!.constructor;
+        const constructor = <typeof RuffleHandle>this.instance!.constructor;
 
         console.log(
             "%c" +
@@ -1162,13 +1170,17 @@ export class RufflePlayer extends HTMLElement {
             event.pointerType === "touch" || event.pointerType === "pen";
     }
 
-    private base64ToBlob(bytesBase64: string, mimeString: string): Blob {
+    private base64ToArray(bytesBase64: string): Uint8Array {
         const byteString = atob(bytesBase64);
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
+        const ia = new Uint8Array(byteString.length);
         for (let i = 0; i < byteString.length; i++) {
             ia[i] = byteString.charCodeAt(i);
         }
+        return ia;
+    }
+
+    private base64ToBlob(bytesBase64: string, mimeString: string): Blob {
+        const ab = this.base64ToArray(bytesBase64);
         const blob = new Blob([ab], { type: mimeString });
         return blob;
     }
@@ -1345,16 +1357,13 @@ export class RufflePlayer extends HTMLElement {
      * Gets the local save information as SOL files and downloads them as a single ZIP file.
      */
     private async backupSaves(): Promise<void> {
-        const zip = new JSZip();
+        const zip = this.newZipWriter!();
         const duplicateNames: string[] = [];
         Object.keys(localStorage).forEach((key) => {
             let solName = String(key.split("/").pop());
             const solData = localStorage.getItem(key);
             if (solData && this.isB64SOL(solData)) {
-                const blob = this.base64ToBlob(
-                    solData,
-                    "application/octet-stream",
-                );
+                const array = this.base64ToArray(solData);
                 const duplicate = duplicateNames.filter(
                     (value) => value === solName,
                 ).length;
@@ -1362,10 +1371,10 @@ export class RufflePlayer extends HTMLElement {
                 if (duplicate > 0) {
                     solName += ` (${duplicate + 1})`;
                 }
-                zip.file(solName + ".sol", blob);
+                zip.addFile(solName + ".sol", array);
             }
         });
-        const blob = await zip.generateAsync({ type: "blob" });
+        const blob = new Blob([zip.save()], { type: "application/zip" });
         this.saveFile(blob, "saves.zip");
     }
 
@@ -1542,7 +1551,9 @@ export class RufflePlayer extends HTMLElement {
             addSeparator();
             items.push({
                 text: text("context-menu-hide"),
-                onClick: () => (this.contextMenuForceDisabled = true),
+                onClick: () => {
+                    this.contextMenuForceDisabled = true;
+                },
             });
         }
         return items;
@@ -1662,7 +1673,23 @@ export class RufflePlayer extends HTMLElement {
                 if (enabled !== false) {
                     menuItem.addEventListener(
                         this.contextMenuSupported ? "click" : "pointerup",
-                        onClick,
+                        (event: MouseEvent) => {
+                            // Prevent the menu from being destroyed.
+                            // It's required when we're dealing with async callbacks,
+                            // as the async callback may still use the menu in the future.
+                            event.stopPropagation();
+
+                            const result = onClick(event);
+
+                            // Then we have to close the context menu manually after the callback finishes.
+                            if (result instanceof Promise) {
+                                result.then(() => {
+                                    this.hideContextMenu();
+                                });
+                            } else {
+                                this.hideContextMenu();
+                            }
+                        },
                     );
                 } else {
                     menuItem.classList.add("disabled");
@@ -1866,6 +1893,10 @@ export class RufflePlayer extends HTMLElement {
         (<any>this)[name] = (...args: unknown[]) => {
             return instance?.call_exposed_callback(name, args);
         };
+    }
+
+    protected getObjectId(): string | null {
+        return this.getAttribute("name");
     }
 
     /**
@@ -2349,6 +2380,10 @@ export class RufflePlayer extends HTMLElement {
         }
     }
 
+    protected displayClipboardModal(): void {
+        this.clipboardModal.classList.remove("hidden");
+    }
+
     protected debugPlayerInfo(): string {
         return "";
     }
@@ -2371,6 +2406,16 @@ export class RufflePlayer extends HTMLElement {
         this.dispatchEvent(new CustomEvent(RufflePlayer.LOADED_METADATA));
         // TODO: Move this to whatever function changes the ReadyState to Loaded when we have streaming support.
         this.dispatchEvent(new CustomEvent(RufflePlayer.LOADED_DATA));
+    }
+
+    /** @ignore */
+    public PercentLoaded(): number {
+        // [NA] This is a stub - we need to research how this is actually implemented (is it just base swf loadedBytes?)
+        if (this._readyState === ReadyState.Loaded) {
+            return 100;
+        } else {
+            return 0;
+        }
     }
 }
 

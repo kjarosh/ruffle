@@ -2,13 +2,15 @@
 
 use crate::avm2::activation::Activation;
 use crate::avm2::class::Class;
+use crate::avm2::e4x::is_xml_name;
+use crate::avm2::error::make_error_1098;
 use crate::avm2::method::{Method, NativeMethodImpl};
 use crate::avm2::object::{namespace_allocator, FunctionObject, Object, TObject};
 use crate::avm2::value::Value;
 use crate::avm2::Error;
 use crate::avm2::Namespace;
 use crate::avm2::QName;
-use crate::{avm2_stub_constructor, avm2_stub_getter};
+use crate::string::AvmString;
 
 // All of these methods will be defined as both
 // AS3 instance methods and methods on the `Namespace` class prototype.
@@ -21,31 +23,66 @@ pub fn instance_init<'gc>(
     args: &[Value<'gc>],
 ) -> Result<Value<'gc>, Error<'gc>> {
     if let Some(this) = this.as_namespace_object() {
-        let uri_value = match args {
-            [_prefix, uri] => {
-                avm2_stub_constructor!(activation, "Namespace", "Namespace prefix not supported");
-                Some(*uri)
-            }
-            [uri] => Some(*uri),
-            _ => None,
-        };
-
         let api_version = activation.avm2().root_api_version;
 
-        let namespace = match uri_value {
-            Some(Value::Object(Object::QNameObject(qname))) => qname
-                .uri()
-                .map(|uri| Namespace::package(uri, api_version, &mut activation.borrow_gc()))
-                .unwrap_or_else(|| Namespace::any(activation.context.gc_context)),
-            Some(val) => Namespace::package(
-                val.coerce_to_string(activation)?,
-                api_version,
-                &mut activation.borrow_gc(),
+        let (prefix, namespace) = match args {
+            [prefix, uri] => {
+                let namespace_uri = if let Value::Object(Object::QNameObject(qname)) = uri {
+                    qname.uri().unwrap_or_else(|| AvmString::from(""))
+                } else {
+                    uri.coerce_to_string(activation)?
+                };
+                let namespace =
+                    Namespace::package(namespace_uri, api_version, &mut activation.borrow_gc());
+                let prefix_str = prefix.coerce_to_string(activation)?;
+
+                // The order is important here to match Flash
+                let mut resulting_prefix = if matches!(prefix, Value::Undefined | Value::Null) {
+                    None
+                } else {
+                    Some(prefix_str)
+                };
+                // The only allowed prefix if the uri is empty is the literal empty string
+                if namespace.as_uri().is_empty() && resulting_prefix != Some("".into()) {
+                    return Err(make_error_1098(activation, &prefix_str));
+                }
+                if !prefix_str.is_empty() && !is_xml_name(prefix_str) {
+                    resulting_prefix = None;
+                }
+                (resulting_prefix, namespace)
+            }
+            [Value::Object(Object::QNameObject(qname))] => {
+                let ns = qname
+                    .uri()
+                    .map(|uri| Namespace::package(uri, api_version, &mut activation.borrow_gc()))
+                    .unwrap_or_else(|| Namespace::any(activation.context.gc_context));
+                if ns.as_uri().is_empty() {
+                    (Some("".into()), ns)
+                } else {
+                    (None, ns)
+                }
+            }
+            [Value::Object(Object::NamespaceObject(ns))] => (ns.prefix(), ns.namespace()),
+            [val] => {
+                let ns = Namespace::package(
+                    val.coerce_to_string(activation)?,
+                    api_version,
+                    &mut activation.borrow_gc(),
+                );
+                if ns.as_uri().is_empty() {
+                    (Some("".into()), ns)
+                } else {
+                    (None, ns)
+                }
+            }
+            _ => (
+                Some("".into()),
+                activation.avm2().public_namespace_base_version,
             ),
-            None => activation.avm2().public_namespace_base_version,
         };
 
         this.init_namespace(activation.context.gc_context, namespace);
+        this.set_prefix(activation.context.gc_context, prefix);
     }
     Ok(Value::Undefined)
 }
@@ -53,10 +90,14 @@ pub fn instance_init<'gc>(
 fn class_call<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Object<'gc>,
-    _args: &[Value<'gc>],
+    args: &[Value<'gc>],
 ) -> Result<Value<'gc>, Error<'gc>> {
-    avm2_stub_constructor!(activation, "Namespace");
-    Err("Namespace constructor is a stub.".into())
+    Ok(activation
+        .avm2()
+        .classes()
+        .namespace
+        .construct(activation, args)?
+        .into())
 }
 
 /// Implements `Namespace`'s native instance initializer.
@@ -101,13 +142,14 @@ pub fn class_init<'gc>(
 
 /// Implements `Namespace.prefix`'s getter
 pub fn prefix<'gc>(
-    activation: &mut Activation<'_, 'gc>,
+    _activation: &mut Activation<'_, 'gc>,
     this: Object<'gc>,
     _args: &[Value<'gc>],
 ) -> Result<Value<'gc>, Error<'gc>> {
-    if this.as_namespace_object().is_some() {
-        avm2_stub_getter!(activation, "Namespace", "prefix");
-        return Ok("".into());
+    if let Some(o) = this.as_namespace_object() {
+        if let Some(prefix) = o.prefix() {
+            return Ok(prefix.into());
+        }
     }
 
     Ok(Value::Undefined)
@@ -174,6 +216,11 @@ pub fn create_class<'gc>(activation: &mut Activation<'_, 'gc>) -> Class<'gc> {
         activation.avm2().as3_namespace,
         PUBLIC_INSTANCE_AND_PROTO_METHODS,
     );
+
+    class.mark_traits_loaded(activation.context.gc_context);
+    class
+        .init_vtable(&mut activation.context)
+        .expect("Native class's vtable should initialize");
 
     class
 }

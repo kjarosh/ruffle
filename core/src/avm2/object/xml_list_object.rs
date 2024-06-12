@@ -1,6 +1,6 @@
 use crate::avm2::activation::Activation;
 use crate::avm2::api_version::ApiVersion;
-use crate::avm2::e4x::{E4XNode, E4XNodeKind};
+use crate::avm2::e4x::{E4XNamespace, E4XNode, E4XNodeKind};
 use crate::avm2::error::make_error_1089;
 use crate::avm2::object::script_object::ScriptObjectData;
 use crate::avm2::object::{Object, ObjectPtr, TObject};
@@ -102,6 +102,10 @@ impl<'gc> XmlListObject<'gc> {
         }
     }
 
+    pub fn node_child(&self, index: usize) -> Option<E4XNode<'gc>> {
+        self.0.read().children.get(index).map(|x| *x.node())
+    }
+
     pub fn children(&self) -> Ref<'_, Vec<E4XOrXml<'gc>>> {
         Ref::map(self.0.read(), |d| &d.children)
     }
@@ -175,7 +179,7 @@ impl<'gc> XmlListObject<'gc> {
                 if let Some(name) = last_node.local_name() {
                     let ns = match last_node.namespace() {
                         Some(ns) => Namespace::package(
-                            ns,
+                            ns.uri,
                             ApiVersion::AllVersions,
                             &mut activation.context.borrow_gc(),
                         ),
@@ -713,10 +717,22 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                                 E4XNode::text(activation.gc(), "".into(), r)
                             }
                             None => E4XNode::text(activation.gc(), "".into(), r),
+                            // NOTE: avmplus edge case.
+                            //       See https://github.com/adobe/avmplus/blob/858d034a3bd3a54d9b70909386435cf4aec81d21/core/XMLListObject.cpp#L297-L300
+                            _ if value
+                                .as_object()
+                                .and_then(|x| x.as_xml_object())
+                                .map_or(false, |x| {
+                                    x.node().is_text() || x.node().is_attribute()
+                                }) =>
+                            {
+                                E4XNode::text(activation.gc(), "".into(), r)
+                            }
+
                             // 2.c.vi. Else let y.[[Class]] = "element"
                             Some(property) => E4XNode::element(
                                 activation.gc(),
-                                property.explicit_namespace(),
+                                property.explicit_namespace().map(E4XNamespace::new_uri),
                                 property.local_name().expect("Local name should exist"),
                                 r,
                             ),
@@ -771,9 +787,7 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                                 if let Some(name) = xml.node().local_name() {
                                     y.set_local_name(name, activation.gc());
                                 }
-                                if let Some(namespace) = xml.node().namespace() {
-                                    y.set_namespace(namespace, activation.gc());
-                                }
+                                y.set_namespace(xml.node().namespace(), activation.gc());
                             }
 
                             // 2.c.viii.3. Else if Type(V) is XMLList, let y.[[Name]] = V.[[TargetProperty]]
@@ -786,7 +800,10 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                                         y.set_local_name(name, activation.gc());
                                     }
                                     if let Some(namespace) = target_property.explicit_namespace() {
-                                        y.set_namespace(namespace, activation.gc());
+                                        y.set_namespace(
+                                            Some(E4XNamespace::new_uri(namespace)),
+                                            activation.gc(),
+                                        );
                                     }
                                 }
                             }

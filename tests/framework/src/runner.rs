@@ -9,8 +9,8 @@ use anyhow::{anyhow, Result};
 use image::ImageFormat;
 use pretty_assertions::Comparison;
 use ruffle_core::backend::navigator::NullExecutor;
-use ruffle_core::events::MouseButton as RuffleMouseButton;
 use ruffle_core::events::{KeyCode, TextControlCode as RuffleTextControlCode};
+use ruffle_core::events::{MouseButton as RuffleMouseButton, MouseWheelDelta};
 use ruffle_core::limits::ExecutionLimit;
 use ruffle_core::tag_utils::SwfMovie;
 use ruffle_core::{Player, PlayerBuilder, PlayerEvent};
@@ -226,6 +226,13 @@ impl TestRunner {
                         InputMouseButton::Right => RuffleMouseButton::Right,
                     },
                 },
+                AutomatedEvent::MouseWheel { lines, pixels } => PlayerEvent::MouseWheel {
+                    delta: match (lines, pixels) {
+                        (Some(lines), None) => MouseWheelDelta::Lines(*lines),
+                        (None, Some(pixels)) => MouseWheelDelta::Pixels(*pixels),
+                        _ => panic!("MouseWheel: expected only one of 'lines' or 'pixels'"),
+                    },
+                },
                 AutomatedEvent::KeyDown { key_code } => PlayerEvent::KeyDown {
                     key_code: KeyCode::from_u8(*key_code).expect("Invalid keycode in test"),
                     key_char: None,
@@ -239,10 +246,38 @@ impl TestRunner {
                 },
                 AutomatedEvent::TextControl { code } => PlayerEvent::TextControl {
                     code: match code {
-                        InputTextControlCode::MoveLeft => RuffleTextControlCode::Backspace,
-                        InputTextControlCode::MoveRight => RuffleTextControlCode::Delete,
+                        InputTextControlCode::MoveLeft => RuffleTextControlCode::MoveLeft,
+                        InputTextControlCode::MoveLeftWord => RuffleTextControlCode::MoveLeftWord,
+                        InputTextControlCode::MoveLeftLine => RuffleTextControlCode::MoveLeftLine,
+                        InputTextControlCode::MoveLeftDocument => {
+                            RuffleTextControlCode::MoveLeftDocument
+                        }
+                        InputTextControlCode::MoveRight => RuffleTextControlCode::MoveRight,
+                        InputTextControlCode::MoveRightWord => RuffleTextControlCode::MoveRightWord,
+                        InputTextControlCode::MoveRightLine => RuffleTextControlCode::MoveRightLine,
+                        InputTextControlCode::MoveRightDocument => {
+                            RuffleTextControlCode::MoveRightDocument
+                        }
                         InputTextControlCode::SelectLeft => RuffleTextControlCode::SelectLeft,
+                        InputTextControlCode::SelectLeftWord => {
+                            RuffleTextControlCode::SelectLeftWord
+                        }
+                        InputTextControlCode::SelectLeftLine => {
+                            RuffleTextControlCode::SelectLeftLine
+                        }
+                        InputTextControlCode::SelectLeftDocument => {
+                            RuffleTextControlCode::SelectLeftDocument
+                        }
                         InputTextControlCode::SelectRight => RuffleTextControlCode::SelectRight,
+                        InputTextControlCode::SelectRightWord => {
+                            RuffleTextControlCode::SelectRightWord
+                        }
+                        InputTextControlCode::SelectRightLine => {
+                            RuffleTextControlCode::SelectRightLine
+                        }
+                        InputTextControlCode::SelectRightDocument => {
+                            RuffleTextControlCode::SelectRightDocument
+                        }
                         InputTextControlCode::SelectAll => RuffleTextControlCode::SelectAll,
                         InputTextControlCode::Copy => RuffleTextControlCode::Copy,
                         InputTextControlCode::Paste => RuffleTextControlCode::Paste,

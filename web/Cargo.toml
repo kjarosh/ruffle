@@ -59,6 +59,7 @@ gloo-net =  { version = "0.5.0", default-features = false, features = ["websocke
 rfd = { version = "0.14.1", features = ["file-handle-inner"] }
 wasm-streams = "0.4.0"
 futures = { workspace = true }
+zip = { version = "2.1.2", default-features = false}
 
 [dependencies.ruffle_core]
 path = "../core"
@@ -72,7 +73,8 @@ features = [
     "ChannelMergerNode", "ChannelSplitterNode", "ClipboardEvent", "DataTransfer", "Element", "Event",
     "EventTarget", "GainNode", "Headers", "HtmlCanvasElement", "HtmlDocument", "HtmlElement", "HtmlFormElement",
     "HtmlInputElement", "HtmlTextAreaElement", "KeyboardEvent", "Location", "PointerEvent",
-    "Request", "RequestInit", "Response", "Storage", "WheelEvent", "Window", "ReadableStream", "RequestCredentials"
+    "Request", "RequestInit", "Response", "Storage", "WheelEvent", "Window", "ReadableStream", "RequestCredentials",
+    "Url", "Clipboard",
 ]
 
 [package.metadata.cargo-machete]

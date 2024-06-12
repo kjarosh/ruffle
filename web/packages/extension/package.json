@@ -9,7 +9,8 @@
         "build": "tsc -p jsconfig.json && npm run build:generic && npm run build:firefox",
         "build:generic": "webpack --env generic && node tools/inject_plugin_polyfill.js && node tools/zip.js dist/ruffle_extension.zip",
         "build:firefox": "webpack --env firefox && node tools/inject_plugin_polyfill.js && node tools/zip.js dist/firefox_unsigned.xpi && npm run sign-firefox",
-        "sign-firefox": "node tools/submit_xpi.js dist/firefox_unsigned.xpi ../../../reproducible-source.zip"
+        "sign-firefox": "node tools/submit_xpi.js dist/firefox_unsigned.xpi ../../../reproducible-source.zip",
+        "checkTypes": "tsc --noemit"
     },
     "dependencies": {
         "ruffle-core": "^0.1.0"
@@ -17,7 +18,7 @@
     "devDependencies": {
         "@tsconfig/strictest": "^2.0.5",
         "@types/archiver": "^6.0.2",
-        "@types/chrome": "^0.0.267",
+        "@types/chrome": "^0.0.268",
         "@types/common-tags": "^1.8.4",
         "@types/firefox-webext-browser": "^120.0.3",
         "@types/jsonwebtoken": "^9.0.6",
@@ -26,7 +27,7 @@
         "ts-loader": "^9.5.1",
         "typescript": "^5.4.5",
         "webpack-cli": "^5.1.4",
-        "axios": "^1.6.8",
+        "axios": "^1.7.2",
         "form-data": "^4.0.0",
         "jsonwebtoken": "^9.0.2"
     }

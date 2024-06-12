@@ -61,6 +61,12 @@ jobs:
           sudo apt-get update
           sudo apt install -y libasound2-dev libxcb-shape0-dev libxcb-xfixes0-dev libgtk-3-dev mesa-vulkan-drivers libpango1.0-dev libudev-dev
 
+      # Needed after: https://github.com/rust-lang/rust/pull/124129
+      # Based on: https://github.com/dtolnay/linkme/pull/88
+      - name: Disable rust-lld
+        if: matrix.rust_version == 'nightly'
+        run: echo RUSTFLAGS=${RUSTFLAGS}\ --cfg=web_sys_unstable_apis\ -Zlinker-features=-lld >> $GITHUB_ENV
+
       - name: Cache Cargo output
         uses: Swatinem/rust-cache@v2
         with:
@@ -84,6 +90,9 @@ jobs:
           # Supposedly makes "Updating crates.io index" faster on Windows.
           # See: https://github.com/rust-lang/cargo/issues/9167
           CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+          # Workaround for: https://github.com/nextest-rs/nextest/issues/1493
+          # See also: https://github.com/rust-lang/rustup/issues/3825
+          RUSTUP_WINDOWS_PATH_ADD_BIN: '1'
           XDG_RUNTIME_DIR: '' # dummy value, just to silence warnings about it missing
 
       - name: Run tests without image tests

@@ -84,6 +84,11 @@ pub fn dispatch_added_to_stage_event<'gc>(
             dispatch_added_to_stage_event(grandchild, context)
         }
     }
+    if let Some(button) = child.as_avm2_button() {
+        if let Some(child) = button.get_state_child(button.state().into()) {
+            dispatch_added_to_stage_event(child, context);
+        }
+    }
 }
 
 /// Dispatch an `added` event to one object, and log any errors encountered
@@ -481,6 +486,14 @@ pub trait TDisplayObjectContainer<'gc>:
         true
     }
 
+    /// The property `tabChildren` allows changing the behavior of
+    /// tab ordering hierarchically.
+    /// When set to `false`, it excludes the whole subtree represented by
+    /// the container from tab ordering.
+    ///
+    /// _NOTE:_
+    /// According to the AS2 documentation, it should affect only automatic tab ordering.
+    /// However, that does not seem to be the case, as it also affects custom ordering.
     fn is_tab_children(&self, context: &mut UpdateContext<'_, 'gc>) -> bool {
         if context.swf.is_action_script_3() {
             self.raw_container().tab_children
@@ -493,7 +506,8 @@ pub trait TDisplayObjectContainer<'gc>:
         if context.swf.is_action_script_3() {
             self.raw_container_mut(context.gc()).tab_children = value;
         } else {
-            tracing::warn!("Trying to set tab_children on an AVM1 object, this has no effect")
+            let self_do: DisplayObject<'gc> = (*self).into();
+            self_do.set_avm1_property(context, "tabChildren", value.into());
         }
     }
 
