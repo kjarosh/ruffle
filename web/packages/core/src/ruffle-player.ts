@@ -69,8 +69,11 @@ interface ContextMenuItem {
      * The function to call when clicked.
      *
      * @param event The mouse event that triggered the click.
+     *
+     * @returns Either `void` in case the callback is synchronous,
+     *          or `Promise<void>` when the callback is asynchronous.
      */
-    onClick: (event: MouseEvent) => void;
+    onClick: (event: MouseEvent) => void | Promise<void>;
 
     /**
      * Whether this item is clickable.
@@ -1543,7 +1546,9 @@ export class RufflePlayer extends HTMLElement {
             addSeparator();
             items.push({
                 text: text("context-menu-hide"),
-                onClick: () => (this.contextMenuForceDisabled = true),
+                onClick: () => {
+                    this.contextMenuForceDisabled = true;
+                },
             });
         }
         return items;
@@ -1663,7 +1668,23 @@ export class RufflePlayer extends HTMLElement {
                 if (enabled !== false) {
                     menuItem.addEventListener(
                         this.contextMenuSupported ? "click" : "pointerup",
-                        onClick,
+                        (event: MouseEvent) => {
+                            // Prevent the menu from being destroyed.
+                            // It's required when we're dealing with async callbacks,
+                            // as the async callback may still use the menu in the future.
+                            event.stopPropagation();
+
+                            const result = onClick(event);
+
+                            // Then we have to close the context menu manually after the callback finishes.
+                            if (result instanceof Promise) {
+                                result.then(() => {
+                                    this.hideContextMenu();
+                                });
+                            } else {
+                                this.hideContextMenu();
+                            }
+                        },
                     );
                 } else {
                     menuItem.classList.add("disabled");
