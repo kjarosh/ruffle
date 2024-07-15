@@ -30,7 +30,6 @@ interface VersionInformation {
     version_channel: string;
     build_date: string;
     commitHash: string;
-    build_id: string;
     firefox_extension_id: string;
 }
 
@@ -58,7 +57,6 @@ if (process.env["ENABLE_VERSION_SEAL"] === "true") {
             version_channel: versionChannel,
             build_date: buildDate,
             commitHash: commitHash,
-            build_id: process.env["BUILD_ID"] ?? "",
             firefox_extension_id: firefoxExtensionId,
         };
 

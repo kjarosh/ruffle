@@ -17,7 +17,6 @@ function transformManifest(content, env) {
     let packageVersion = pkg.version;
     let versionChannel = process.env["CFG_RELEASE_CHANNEL"] || "nightly";
     let buildDate = new Date().toISOString().substring(0, 10);
-    let buildId = process.env["BUILD_ID"];
     let firefoxExtensionId =
         process.env["FIREFOX_EXTENSION_ID"] || "ruffle@ruffle.rs";
 
@@ -30,7 +29,6 @@ function transformManifest(content, env) {
             packageVersion = versionSeal.version_number;
             versionChannel = versionSeal.version_channel;
             buildDate = versionSeal.build_date.substring(0, 10);
-            buildId = versionSeal.build_id;
             firefoxExtensionId = versionSeal.firefox_extension_id;
         } else {
             throw new Error(
@@ -44,11 +42,7 @@ function transformManifest(content, env) {
     // when it gets generated in web/packages/core/tools/set_version.js and then
     // load it in the code above.
 
-    // The extension marketplaces require the version to monotonically increase,
-    // so append the build number onto the end of the manifest version.
-    manifest.version = buildId
-        ? `${packageVersion}.${buildId}`
-        : packageVersion;
+    manifest.version = packageVersion;
 
     if (env["firefox"]) {
         manifest.browser_specific_settings = {
