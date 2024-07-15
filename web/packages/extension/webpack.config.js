@@ -15,7 +15,7 @@ function transformManifest(content, env) {
     );
 
     let packageVersion = pkg.version;
-    let versionChannel = process.env["CFG_RELEASE_CHANNEL"] || "nightly";
+    let versionChannel = process.env["CFG_RELEASE_CHANNEL"] || "none";
     let buildDate = new Date().toISOString().substring(0, 10);
     let firefoxExtensionId =
         process.env["FIREFOX_EXTENSION_ID"] || "ruffle@ruffle.rs";
