@@ -3,8 +3,10 @@ import childProcess from "child_process";
 import fs from "fs";
 import path from "path";
 
+const pkg = JSON.parse(fs.readFileSync("package.json", { encoding: "utf8" }));
+
 let buildDate = new Date().toISOString();
-let versionNumber = process.env["npm_package_version"] ?? "";
+let versionNumber = pkg.version;
 let versionChannel = process.env["CFG_RELEASE_CHANNEL"] || "nightly";
 const firefoxExtensionId =
     process.env["FIREFOX_EXTENSION_ID"] || "ruffle@ruffle.rs";

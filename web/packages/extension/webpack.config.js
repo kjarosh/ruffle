@@ -10,8 +10,11 @@ import CopyPlugin from "copy-webpack-plugin";
  */
 function transformManifest(content, env) {
     const manifest = json5.parse(content.toString());
+    const pkg = JSON.parse(
+        fs.readFileSync("package.json", { encoding: "utf8" }),
+    );
 
-    let packageVersion = process.env["npm_package_version"];
+    let packageVersion = pkg.version;
     let versionChannel = process.env["CFG_RELEASE_CHANNEL"] || "nightly";
     let buildDate = new Date().toISOString().substring(0, 10);
     let buildId = process.env["BUILD_ID"];
