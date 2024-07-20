@@ -149,6 +149,7 @@ fn shutdown() {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     init();
+    println!("Hello World!");
 
     let opt = Opt::parse();
     let preferences = GlobalPreferences::load(opt.clone())?;
