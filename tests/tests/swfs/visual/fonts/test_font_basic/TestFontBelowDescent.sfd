@@ -1,0 +1,126 @@
+SplineFontDB: 3.2
+FontName: TestFontBelowDescent
+FullName: TestFontBelowDescent
+FamilyName: TestFontBelowDescent
+Weight: Regular
+Copyright: Copyright (c) 2024, Kamil Jarosz
+UComments: "2024-7-24: Created with FontForge (http://fontforge.org)"
+Version: 001.000
+ItalicAngle: 0
+UnderlinePosition: -100
+UnderlineWidth: 50
+Ascent: 800
+Descent: 200
+InvalidEm: 0
+LayerCount: 2
+Layer: 0 0 "Back" 1
+Layer: 1 0 "Fore" 0
+XUID: [1021 253 198287149 6396829]
+StyleMap: 0x0000
+FSType: 0
+OS2Version: 0
+OS2_WeightWidthSlopeOnly: 0
+OS2_UseTypoMetrics: 1
+CreationTime: 1721856925
+ModificationTime: 1722341063
+OS2TypoAscent: 0
+OS2TypoAOffset: 1
+OS2TypoDescent: 0
+OS2TypoDOffset: 1
+OS2TypoLinegap: 90
+OS2WinAscent: 0
+OS2WinAOffset: 1
+OS2WinDescent: 0
+OS2WinDOffset: 1
+HheadAscent: 0
+HheadAOffset: 1
+HheadDescent: 0
+HheadDOffset: 1
+MarkAttachClasses: 1
+DEI: 91125
+Encoding: ISO8859-1
+UnicodeInterp: none
+NameList: AGL For New Fonts
+DisplaySize: -48
+AntiAlias: 1
+FitToEm: 0
+WinInfo: 0 30 10
+BeginPrivate: 0
+EndPrivate
+Grid
+-1000 -299.998840332 m 0
+ 2000 -299.998840332 l 1024
+  Named: "300"
+-1000 -400 m 0
+ 2000 -400 l 1024
+  Named: "400"
+-1000 -299.939386541 m 1024
+  Named: "300"
+EndSplineSet
+BeginChars: 256 4
+
+StartChar: a
+Encoding: 97 97 0
+Width: 800
+Flags: HW
+LayerCount: 2
+Fore
+SplineSet
+0 800 m 1
+ 800 800 l 1
+ 800 0 l 1
+ 0 0 l 1
+ 0 800 l 1
+EndSplineSet
+Validated: 1
+EndChar
+
+StartChar: b
+Encoding: 98 98 1
+Width: 100
+Flags: HW
+LayerCount: 2
+Fore
+SplineSet
+0 800 m 5
+ 100 800 l 1
+ 100 0 l 1
+ 0 0 l 1
+ 0 800 l 5
+EndSplineSet
+Validated: 1
+EndChar
+
+StartChar: c
+Encoding: 99 99 2
+Width: 800
+Flags: HW
+LayerCount: 2
+Fore
+SplineSet
+0 0 m 5
+ 800 0 l 5
+ 800 -300 l 5
+ 0 -300 l 5
+ 0 0 l 5
+EndSplineSet
+Validated: 1
+EndChar
+
+StartChar: d
+Encoding: 100 100 3
+Width: 100
+Flags: HW
+LayerCount: 2
+Fore
+SplineSet
+0 0 m 1
+ 100 0 l 1
+ 100 -400 l 1
+ 0 -400 l 1
+ 0 0 l 1
+EndSplineSet
+Validated: 1
+EndChar
+EndChars
+EndSplineFont
