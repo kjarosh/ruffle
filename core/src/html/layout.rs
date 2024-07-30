@@ -325,6 +325,10 @@ impl<'a, 'gc> LayoutContext<'a, 'gc> {
             self.append_bullet(context, &self.current_line_span.clone(), font_type);
         }
 
+        if self.boxes.is_empty() {
+            self.append_text(WStr::empty(), end, end, span);
+        }
+
         box_count = 0;
         for layout_box in self.boxes.iter_mut() {
             let baseline_adjustment = self.max_ascent;
