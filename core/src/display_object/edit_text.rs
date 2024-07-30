@@ -2347,9 +2347,9 @@ impl<'gc> TDisplayObject<'gc> for EditText<'gc> {
 
         context.commands.push_mask();
         let mask = Matrix::create_box(
-            edit_text.bounds.width().to_pixels() as f32,
+            (edit_text.bounds.width() - Self::GUTTER_WIDTH * 2).to_pixels() as f32 ,
             edit_text.bounds.height().to_pixels() as f32,
-            Twips::ZERO,
+            Self::GUTTER_WIDTH,
             Twips::ZERO,
         );
         context.commands.draw_rect(
