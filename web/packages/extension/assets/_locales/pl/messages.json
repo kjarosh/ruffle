@@ -1,98 +1,116 @@
 {
     "settings_ruffle_enable": {
-        "message": "Odtwarzaj zawartość Flash w Ruffle"
+        "message": "Play Flash content in Ruffle"
     },
     "settings_ignore_optout": {
-        "message": "Odtwarzaj zawartość Flash nawet na stronach uniemożliwiających Ruffle"
+        "message": "Play Flash content even on sites that disallow Ruffle"
     },
     "settings_show_swf_download": {
-        "message": "Pokaż pobieranie SWF w menu kontekstowym"
+        "message": "Show SWF download in context menu"
     },
     "settings_autostart": {
-        "message": "Odtwarzaj automatycznie bez ekranu powitalnego (następnie kliknij aby cofnąć wyciszenie)"
+        "message": "Autoplay Flash content (click to unmute)"
     },
     "settings_log_level": {
-        "message": "Poziom rejestrowania"
+        "message": "Log level"
     },
     "settings_log_level_error": {
-        "message": "Błędy"
+        "message": "Errors"
     },
     "settings_log_level_warn": {
-        "message": "Ostrzeżenia"
+        "message": "Warnings"
     },
     "settings_log_level_info": {
         "message": "Info"
     },
     "settings_max_execution_duration": {
-        "message": "Maksymalny dozwolony czas wykonania ActionScript (w sekundach)"
+        "message": "Maximum allowed ActionScript execution duration (in seconds)"
     },
     "settings_player_version": {
-        "message": "Numer wersji Flash odtwarzacza do emulowania (zakres 1-32)"
+        "message": "Flash player version number to emulate (range 1-32)"
     },
     "settings_preferred_renderer": {
-        "message": "Preferowany renderer"
+        "message": "Preferred renderer"
     },
     "settings_preferred_renderer_auto": {
-        "message": "Automatyczny"
+        "message": "Automatic"
     },
     "settings_advanced_options": {
-        "message": "Opcje Zaawansowane"
+        "message": "Advanced Options"
     },
     "settings_reset": {
-        "message": "Resetuj ustawienia"
+        "message": "Reset settings"
     },
     "settings_reset_confirm": {
-        "message": "Czy na pewno chcesz przywrócić ustawienia Ruffle do oryginalnych domyślnych?"
+        "message": "Are you sure you want to restore Ruffle settings to their original defaults?"
     },
     "status_init": {
-        "message": "Czytanie bieżącej karty…"
+        "message": "Reading current tab…"
     },
     "status_no_tabs": {
-        "message": "Brak aktywnej karty."
+        "message": "There is no active tab."
     },
     "status_tabs_error": {
-        "message": "Wystąpił błąd podczas wyszukiwania bieżącej karty."
+        "message": "An error occurred when looking up the current tab."
     },
     "status_message_init": {
-        "message": "Sprawdzanie statusu Ruffle na bieżącej karcie…"
+        "message": "Checking Ruffle status on current tab…"
     },
     "status_result_running": {
-        "message": "Ruffle jest gotowy do uruchomienia zawartości Flash w bieżącej karcie."
+        "message": "Ruffle is ready to run Flash content in the current tab."
     },
     "status_result_running_protected": {
-        "message": "Ruffle jest gotowy do uruchomienia żądanej zawartości Flash."
+        "message": "Ruffle is ready to run the Flash content that you request."
     },
     "status_result_optout": {
-        "message": "Ruffle nie jest załadowany, ponieważ bieżąca strona oznaczyła się jako niekompatybilna."
+        "message": "Ruffle cannot load because the current website marked itself as incompatible."
     },
     "status_result_disabled": {
-        "message": "Ruffle jest wyłączony."
+        "message": "Ruffle is disabled."
     },
     "status_result_error": {
-        "message": "Wystąpił błąd podczas zapytania bieżącej karty o Ruffle."
+        "message": "An error occurred while querying the current page's Ruffle instance."
     },
     "status_result_protected": {
-        "message": "Ruffle nie może załadować się na chronionych stronach przeglądarki."
+        "message": "Ruffle cannot load in protected browser pages."
     },
     "action_reload": {
-        "message": "Przeładuj kartę aby zastosować zmiany"
+        "message": "Reload Tab to Apply Changes"
     },
     "open_player_page": {
-        "message": "Otwórz Odtwarzacz SWF"
+        "message": "Open SWF Player"
     },
     "open_settings_page": {
-        "message": "Otwórz stronę ustawień"
+        "message": "Open Settings Page"
     },
     "settings_page": {
-        "message": "Strona ustawień"
+        "message": "Settings Page"
     },
     "description": {
-        "message": "Przywraca Flasha do Sieci, gdzie jest jego miejsce."
+        "message": "Puts Flash back on the web where it belongs."
     },
     "save_settings": {
-        "message": "Zapisz ustawienia"
+        "message": "Save Settings"
     },
     "settings_saved": {
-        "message": "Zapisano ustawienia"
+        "message": "Settings Saved"
+    },
+    "onboarding_page": {
+        "message": "Onboarding Page"
+    },
+    "permissions_grant": {
+        "message": "Grant Ruffle permission to access my data on all sites"
+    },
+    "permissions_not_granted": {
+        "message": "You will need to click the Ruffle icon on every site on which you want to use Ruffle"
+    },
+    "grant_single_site_permission": {
+        "message": "Permanently enable for this site"
+    },
+    "permissions_explanation": {
+        "message": "The Ruffle extension works best with the ability to access data on all websites. This allows it to run when any website first loads, therefore allowing it to convince websites that do Flash Player detection immediately to let the Flash content run. It also gives it the ability to load SWF files into its internal player page from other locations on the web. If you do not grant this permission, you will need to enable Ruffle manually on every website on which you wish to use it by clicking the icon for the extension and enabling it for that website."
+    },
+    "swf_player_permissions": {
+        "message": "You must grant permission to this URL origin to load SWFs from it."
     }
 }

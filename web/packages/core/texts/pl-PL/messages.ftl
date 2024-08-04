@@ -1,73 +1,85 @@
 message-cant-embed =
-    Ruffle nie było w stanie uruchomić zawartości Flash w tej stronie.
-    Możesz spróbować otworzyć plik w nowej karcie, aby uniknąć tego problemu.
-panic-title = Coś poszło nie tak :(
-more-info = Więcej informacji
-run-anyway = Uruchom mimo tego
-continue = Kontynuuj
-report-bug = Zgłoś błąd
-update-ruffle = Zaktualizuj Ruffle
-ruffle-desktop = Aplikacja na komputer
-ruffle-wiki = Zobacz Wiki Ruffle
-view-error-details = Zobacz szczegóły błędu
-open-in-new-tab = Otwórz w nowej karcie
-click-to-unmute = Kliknij aby wyłączyć wyciszenie
+    Ruffle wasn't able to run the Flash embedded in this page.
+    You can try to open the file in a separate tab, to sidestep this issue.
+panic-title = Something went wrong :(
+more-info = More info
+run-anyway = Run anyway
+continue = Continue
+report-bug = Report Bug
+update-ruffle = Update Ruffle
+ruffle-demo = Web Demo
+ruffle-desktop = Desktop Application
+ruffle-wiki = View Ruffle Wiki
+enable-hardware-acceleration = It looks like hardware acceleration is disabled. While Ruffle may work, it could be very slow. You can find out how to enable hardware acceleration by following the link below:
+enable-hardware-acceleration-link = FAQ - Chrome Hardware Acceleration
+view-error-details = View Error Details
+open-in-new-tab = Open in a new tab
+click-to-unmute = Click to unmute
+clipboard-message-title = Copying and pasting in Ruffle
+clipboard-message-description =
+    { $variant ->
+       *[unsupported] Your browser does not support full clipboard access,
+        [access-denied] Access to the clipboard has been denied,
+    } but you can always use these shortcuts instead:
+clipboard-message-copy = { " " } for copy
+clipboard-message-cut = { " " } for cut
+clipboard-message-paste = { " " } for paste
 error-file-protocol =
-    Wygląda na to, że używasz Ruffle w protokole "plik:".
-    To nie działa ponieważ przeglądarka blokuje wiele funkcji przed działaniem ze względów bezpieczeństwa.
-    Zamiast tego zapraszamy do konfiguracji serwera lokalnego lub użycia aplikacji demo lub desktopowej.
+    It appears you are running Ruffle on the "file:" protocol.
+    This doesn't work as browsers block many features from working for security reasons.
+    Instead, we invite you to setup a local server or either use the web demo or the desktop application.
 error-javascript-config =
-    Ruffle napotkał poważny problem z powodu nieprawidłowej konfiguracji JavaScript.
-    Jeśli jesteś administratorem serwera, prosimy o sprawdzenie szczegółów błędu, aby dowiedzieć się, który parametr jest błędny.
-    Możesz również zapoznać się z wiki Ruffle po pomoc.
+    Ruffle has encountered a major issue due to an incorrect JavaScript configuration.
+    If you are the server administrator, we invite you to check the error details to find out which parameter is at fault.
+    You can also consult the Ruffle wiki for help.
 error-wasm-not-found =
-    Ruffle nie udało się załadować wymaganego komponentu pliku ".wasm".
-    Jeśli jesteś administratorem serwera, upewnij się, że plik został poprawnie przesłany.
-    Jeśli problem będzie się powtarzał, być może będziesz musiał użyć ustawienia "publicPath": zapoznaj się z wiki Ruffle aby uzyskać pomoc.
+    Ruffle failed to load the required ".wasm" file component.
+    If you are the server administrator, please ensure the file has correctly been uploaded.
+    If the issue persists, you may need to use the "publicPath" setting: please consult the Ruffle wiki for help.
 error-wasm-mime-type =
-    Ruffle napotkał poważny problem podczas próby zainicjowania.
-    Ten serwer internetowy nie obsługuje ". asm" pliki z poprawnym typem MIME.
-    Jeśli jesteś administratorem serwera, zapoznaj się z wiki Ruffle aby uzyskać pomoc.
+    Ruffle has encountered a major issue whilst trying to initialize.
+    This web server is not serving ".wasm" files with the correct MIME type.
+    If you are the server administrator, please consult the Ruffle wiki for help.
 error-invalid-swf =
-    Ruffle nie może przetworzyć żądanego pliku.
-    Prawdopodobnie to nie jest poprawny plik SWF.
+    Ruffle cannot parse the requested file.
+    The most likely reason is that the requested file is not a valid SWF.
 error-swf-fetch =
-    Ruffle nie udało się załadować pliku Flash SWF.
-    Najbardziej prawdopodobnym powodem jest to, że plik już nie istnieje, więc Ruffle nie ma nic do załadowania.
-    Spróbuj skontaktować się z administratorem witryny, aby uzyskać pomoc.
+    Ruffle failed to load the Flash SWF file.
+    The most likely reason is that the file no longer exists, so there is nothing for Ruffle to load.
+    Try contacting the website administrator for help.
 error-swf-cors =
-    Ruffle nie udało się załadować pliku Flash SWF.
-    Dostęp do pobierania został prawdopodobnie zablokowany przez politykę CORS.
-    Jeśli jesteś administratorem serwera, prosimy o pomoc z wiki Ruffle.
+    Ruffle failed to load the Flash SWF file.
+    Access to fetch has likely been blocked by CORS policy.
+    If you are the server administrator, please consult the Ruffle wiki for help.
 error-wasm-cors =
-    Ruffle nie udało się załadować wymaganego komponentu pliku ".wasm".
-    Dostęp do pobierania został prawdopodobnie zablokowany przez politykę CORS.
-    Jeśli jesteś administratorem serwera, prosimy o pomoc z wiki Ruffle.
+    Ruffle failed to load the required ".wasm" file component.
+    Access to fetch has likely been blocked by CORS policy.
+    If you are the server administrator, please consult the Ruffle wiki for help.
 error-wasm-invalid =
-    Ruffle napotkał poważny problem podczas próby zainicjowania.
-    Wygląda na to, że ta strona ma brakujące lub nieprawidłowe pliki do uruchomienia Ruffle.
-    Jeśli jesteś administratorem serwera, prosimy o pomoc z wiki Ruffle.
+    Ruffle has encountered a major issue whilst trying to initialize.
+    It seems like this page has missing or invalid files for running Ruffle.
+    If you are the server administrator, please consult the Ruffle wiki for help.
 error-wasm-download =
-    Ruffle napotkał poważny problem podczas próby zainicjowania.
-    Może to często rozwiązać siebie, więc możesz spróbować odświeżyć stronę.
-    W przeciwnym razie skontaktuj się z administratorem witryny.
+    Ruffle has encountered a major issue whilst trying to initialize.
+    This can often resolve itself, so you can try reloading the page.
+    Otherwise, please contact the website administrator.
 error-wasm-disabled-on-edge =
-    Ruffle nie udało się załadować wymaganego komponentu pliku ".wasm".
-    Aby to naprawić, spróbuj otworzyć ustawienia przeglądarki, klikając "Prywatność, wyszukiwanie i usługi", przewijając w dół i wyłączając "Zwiększ bezpieczeństwo w sieci".
-    Pozwoli to przeglądarce załadować wymagane pliki ".wasm".
-    Jeśli problem będzie się powtarzał, być może będziesz musiał użyć innej przeglądarki.
+    Ruffle failed to load the required ".wasm" file component.
+    To fix this, try opening your browser's settings, clicking "Privacy, search, and services", scrolling down, and turning off "Enhance your security on the web".
+    This will allow your browser to load the required ".wasm" files.
+    If the issue persists, you might have to use a different browser.
 error-javascript-conflict =
-    Ruffle napotkał poważny problem podczas próby zainicjowania.
-    Wygląda na to, że ta strona używa kodu JavaScript, który koliduje z Ruffle.
-    Jeśli jesteś administratorem serwera, zapraszamy Cię do ładowania pliku na pustej stronie.
-error-javascript-conflict-outdated = Możesz również spróbować przesłać nowszą wersję Ruffle, która może ominąć problem (obecna wersja jest przestarzała: { $buildDate }).
+    Ruffle has encountered a major issue whilst trying to initialize.
+    It seems like this page uses JavaScript code that conflicts with Ruffle.
+    If you are the server administrator, we invite you to try loading the file on a blank page.
+error-javascript-conflict-outdated = You can also try to upload a more recent version of Ruffle that may circumvent the issue (current build is outdated: { $buildDate }).
 error-csp-conflict =
-    Ruffle napotkał poważny problem podczas próby zainicjowania.
-    Polityka bezpieczeństwa zawartości tego serwera nie zezwala na wymagany ". wasm" komponent do uruchomienia.
-    Jeśli jesteś administratorem serwera, zapoznaj się z wiki Ruffle po pomoc.
+    Ruffle has encountered a major issue whilst trying to initialize.
+    This web server's Content Security Policy does not allow the required ".wasm" component to run.
+    If you are the server administrator, please consult the Ruffle wiki for help.
 error-unknown =
-    Ruffle napotkał poważny problem podczas próby wyświetlenia tej zawartości Flash.
+    Ruffle has encountered a major issue whilst trying to display this Flash content.
     { $outdated ->
-        [true] Jeśli jesteś administratorem serwera, spróbuj przesłać nowszą wersję Ruffle (obecna wersja jest przestarzała: { $buildDate }).
-       *[false] To nie powinno się wydarzyć, więc bylibyśmy wdzięczni, gdybyś mógł zgłosić błąd!
+        [true] If you are the server administrator, please try to upload a more recent version of Ruffle (current build is outdated: { $buildDate }).
+       *[false] This isn't supposed to happen, so we'd really appreciate if you could file a bug!
     }

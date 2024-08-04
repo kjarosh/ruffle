@@ -1,1 +1,2 @@
-volume-controls-mute = Wycisz
+volume-controls-mute = Mute
+volume-controls-unmute = Unmute
