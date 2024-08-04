@@ -1,0 +1,43 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: kjarosh-test\n"
+"POT-Creation-Date: 2024-08-04 13:19+0000\n"
+"PO-Revision-Date: 2024-08-04 13:32\n"
+"Last-Translator: \n"
+"Language-Team: Polish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && (n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+"X-Crowdin-Project: kjarosh-test\n"
+"X-Crowdin-Project-ID: 696923\n"
+"X-Crowdin-Language: pl\n"
+"X-Crowdin-File: /desktop/linux/rs.ruffle.Ruffle.metainfo.xml.pot\n"
+"X-Crowdin-File-ID: 56\n"
+"Language: pl_PL\n"
+
+#. (itstool) path: component/name
+#: rs.ruffle.Ruffle.metainfo.xml:6
+msgid "Ruffle"
+msgstr "Ruffle"
+
+#. (itstool) path: component/summary
+#: rs.ruffle.Ruffle.metainfo.xml:7
+msgid "Play Flash games &amp; movies"
+msgstr "Graj"
+
+#. (itstool) path: description/p
+#: rs.ruffle.Ruffle.metainfo.xml:14
+msgid "Ruffle is a Flash Player emulator written in Rust. Leveraging the safety guarantees of Rust, we can confidently avoid all the security pitfalls that Flash had a reputation for. Ruffle puts Flash back on the web, where it belongs!"
+msgstr ""
+
+#. (itstool) path: description/p
+#: rs.ruffle.Ruffle.metainfo.xml:20
+msgid "This application lets you run Flash content on your computer without a browser in-between, and take full advantage of your GPU and system resources to get those extra frames when playing intense games."
+msgstr ""
+
+#. (itstool) path: description/p
+#: rs.ruffle.Ruffle.metainfo.xml:24
+msgid "Ruffle is an entirely open source project maintained by volunteers. We're all passionate about the preservation of internet history, and we were drawn to working on this project to help preserve the many websites and plethora of content that will no longer be accessible when users can no longer run the official Flash Player. If you would like to help support this project, we welcome all contributions of any kind – even if it's just playing some old games and seeing how well they run."
+msgstr ""
+

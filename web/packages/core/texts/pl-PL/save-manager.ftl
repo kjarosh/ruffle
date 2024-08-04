@@ -1,10 +1,10 @@
-save-delete-prompt = Czy na pewno chcesz skasować ten plik zapisu?
+save-delete-prompt = Are you sure you want to delete this save file?
 save-reload-prompt =
-    Jedyną opcją, aby { $action ->
-        [delete] usunąć
-       *[replace] zamienić
-    } ten plik zapisu bez potencjalnych konfliktów jest przeładowanie zawartości. Czy chcesz kontynuować?
-save-download = Pobierz
-save-replace = Zamień
-save-delete = Usuń
-save-backup-all = Pobierz wszystkie pliki zapisu
+    The only way to { $action ->
+        [delete] delete
+       *[replace] replace
+    } this save file without potential conflict is to reload this content. Do you wish to continue anyway?
+save-download = Download
+save-replace = Replace
+save-delete = Delete
+save-backup-all = Download all save files

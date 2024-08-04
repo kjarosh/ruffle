@@ -1,3 +1,3 @@
-volume-controls = Sterowanie głośnością
-volume-controls-mute = Wycisz
-volume-controls-volume = Głośność
+volume-controls = Volume controls
+volume-controls-mute = Mute
+volume-controls-volume = Volume
