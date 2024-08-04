@@ -2,7 +2,7 @@
 # File structure documentation can be found at: https://developer.crowdin.com/configuration-file/
 
 "api_token_env": "CROWDIN_PERSONAL_TOKEN"
-"project_id": 582621 # This is https://crowdin.com/project/ruffle
+"project_id": 696923 # This is not https://crowdin.com/project/ruffle
 "preserve_hierarchy": true # Keep the directory structure so that we know, for example, "messages.json" belongs to the extension
 
 # Files we want to translate
