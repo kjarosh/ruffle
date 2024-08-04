@@ -3,12 +3,13 @@ name: Download translations from Crowdin
 on:
   schedule:
     - cron: '0 21 * * *'
+  workflow_dispatch:
 
 jobs:
   crowdin:
     runs-on: ubuntu-latest
 
-    if: github.repository == 'ruffle-rs/ruffle'
+    if: github.repository == 'kjarosh/ruffle'
 
     strategy:
       max-parallel: 1
@@ -29,10 +30,10 @@ jobs:
           pull_request_title: 'chore: Update translations'
           pull_request_body: 'New Crowdin pull request with translations'
           pull_request_labels: 'localization'
-          pull_request_base_branch_name: 'master'
+          pull_request_base_branch_name: 'metainfo-locale'
           commit_message: 'chore: Update translations from Crowdin'
         env:
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
           # Use a custom token rather than the automatic GITHUB_TOKEN, as the automatic one doesn't allow created PRs to trigger workflows
           # By using our own token (and thus own user), workflows will run, and the PR will be able to be merged.
-          GITHUB_TOKEN: ${{ secrets.RUFFLE_BUILD_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
