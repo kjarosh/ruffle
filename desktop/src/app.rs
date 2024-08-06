@@ -513,7 +513,7 @@ impl App {
                     }
                 }
 
-                winit::event::Event::UserEvent(RuffleEvent::BrowseAndOpen(options)) => {
+                winit::event::Event::UserEvent(RuffleEvent::BrowseAndOpenFile(options)) => {
                     if let Some(url) =
                         pick_file(false, None).and_then(|p| Url::from_file_path(p).ok())
                     {

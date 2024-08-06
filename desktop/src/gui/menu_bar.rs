@@ -401,7 +401,7 @@ impl MenuBar {
 
         let _ = self
             .event_loop
-            .send_event(RuffleEvent::BrowseAndOpen(Box::new(
+            .send_event(RuffleEvent::BrowseAndOpenFile(Box::new(
                 self.default_launch_options.clone(),
             )));
     }
