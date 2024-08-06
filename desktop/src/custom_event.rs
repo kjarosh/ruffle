@@ -13,7 +13,7 @@ pub enum RuffleEvent {
     OnMetadata(ruffle_core::swf::HeaderExt),
 
     /// The user requested to pick and then open a file.
-    BrowseAndOpen(Box<LaunchOptions>),
+    BrowseAndOpenFile(Box<LaunchOptions>),
 
     /// The user requested to open a movie.
     Open(url::Url, Box<LaunchOptions>),

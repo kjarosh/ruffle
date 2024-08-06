@@ -548,7 +548,7 @@ impl ApplicationHandler<RuffleEvent> for App {
                 }
             }
 
-            (Some(main_window), RuffleEvent::BrowseAndOpen(options)) => {
+            (Some(main_window), RuffleEvent::BrowseAndOpenFile(options)) => {
                 let event_loop = main_window.event_loop_proxy.clone();
                 let picker = main_window.gui.file_picker();
                 tokio::spawn(async move {
