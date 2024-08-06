@@ -50,6 +50,7 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"]}
 tracing-tracy = { version = "=0.10.4", optional = true }
 rand = "0.8.5"
 thiserror.workspace = true
+walkdir.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = "4.4.0"

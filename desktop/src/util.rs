@@ -1,3 +1,4 @@
+use std::io::{Read, Seek, SeekFrom};
 use crate::custom_event::RuffleEvent;
 use anyhow::{anyhow, Error};
 use gilrs::Button;
@@ -5,10 +6,14 @@ use rfd::FileDialog;
 use ruffle_core::events::{GamepadButton, KeyCode, TextControlCode};
 use std::path::{Path, PathBuf};
 use url::Url;
+use walkdir::{DirEntry, WalkDir};
 use winit::dpi::PhysicalSize;
 use winit::event::{KeyEvent, Modifiers};
 use winit::event_loop::EventLoop;
 use winit::keyboard::{Key, KeyLocation, NamedKey};
+use ruffle_frontend_utils::bundle::Bundle;
+use ruffle_frontend_utils::bundle::source::{BundleSource, BundleSourceError};
+use ruffle_frontend_utils::content::PlayingContent;
 
 /// Converts a winit event to a Ruffle `TextControlCode`.
 /// Returns `None` if there is no match.
@@ -277,18 +282,7 @@ pub fn pick_file(_in_ui: bool, path: Option<PathBuf>) -> Option<PathBuf> {
     actually_pick_file(path)
 }
 
-pub fn pick_folder(dir: Option<PathBuf>) -> Option<PathBuf> {
-    let mut dialog = FileDialog::new()
-        .set_title("Open a Folder with Flash Files");
-
-    if let Some(dir) = dir {
-        dialog = dialog.set_directory(dir);
-    }
-
-    dialog.pick_folder()
-}
-
-fn actually_pick_folder(dir: Option<PathBuf>) -> Option<PathBuf> {
+fn actually_pick_folder(dir: Option<PathBuf>) -> Option<PlayingContent> {
     let mut dialog = FileDialog::new()
         .set_title("Open a Folder");
 
@@ -298,6 +292,34 @@ fn actually_pick_folder(dir: Option<PathBuf>) -> Option<PathBuf> {
 
     let directory = dialog.pick_folder()?;
 
+    // Try opening a bundle...
+    match Bundle::from_path(&directory) {
+        Ok(bundle) => {
+            let url = bundle.information().url.clone();
+            return Some(PlayingContent::Bundle(url, bundle));
+        }
+        Err(err) => {
+            tracing::info!("The opened directory is not a bundle: {err}");
+        }
+    }
+
+    // If there's only one SWF in the directory, treat is as the root...
+    if let Ok(read_dir) = directory.read_dir() {
+        let mut files: Vec<std::fs::DirEntry> = read_dir
+            .filter_map(|entry| entry.ok())
+            .filter(|e| e.file_type().map(|t| t.is_file()).unwrap_or_default())
+            .filter(|e| e.file_name().as_encoded_bytes().ends_with(b".swf"))
+            .take(2)
+            .collect();
+        if files.len() == 1 {
+            let file = files.remove(0);
+            if let Ok(url) = Url::from_file_path(file.path()) {
+                return Some(PlayingContent::DirectFile(url));
+            }
+        }
+    }
+
+    // Otherwise let the user choose the root movie
     let mut dialog = FileDialog::new()
         .add_filter("Flash Files", &["swf"])
         .add_filter("All Files", &["*"])
@@ -307,7 +329,56 @@ fn actually_pick_folder(dir: Option<PathBuf>) -> Option<PathBuf> {
         dialog = dialog.set_directory(dir);
     }
 
+    // Now when we are sandboxed, selecting a single file might give us a different path.
+    // That's why we have to find the path of the selected file inside the directory
+    // by comparing filenames and file contents (we cannot use inodes).
+    // Alternatively, we could use here a different file picker
+    // (non-xdg, which can pick files from inside `directory`).
     let root_movie = dialog.pick_file()?;
+    let root_movie_name = root_movie.file_name()?;
+
+    use std::fs::File;
+    let mut root_movie = File::open(&root_movie).ok()?;
+
+    fn same_file(entry: &DirEntry, root_movie: &mut File) -> Result<bool, std::io::Error> {
+        root_movie.seek(SeekFrom::Start(0))?;
+
+        let e_meta = entry.metadata()?;
+        let m_meta = root_movie.metadata()?;
+        if e_meta.len() != m_meta.len() {
+            return Ok(false);
+        }
+
+        let mut other_file = File::open(entry.path())?;
+
+        loop {
+            let mut buf_a = Vec::with_capacity(8*1024);
+            let mut buf_b = Vec::with_capacity(8*1024);
+            let read_a = root_movie.read(&mut buf_a[..])?;
+            let read_b = other_file.read(&mut buf_b[..])?;
+            if read_a != read_b || buf_a[..read_a] != buf_b[..read_b] {
+                return Ok(false);
+            }
+            if read_a == 0 {
+                return Ok(true);
+            }
+        }
+    }
+
+    let root_file = WalkDir::new(directory)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+        .filter(|e| e.file_name().eq(root_movie_name))
+        .filter(|e| same_file(e, &mut root_movie)
+            .inspect_err(|e| tracing::warn!("Error while looking for root SWF: {e}"))
+            .unwrap_or(false))
+        .next()?;
+
+    if let Ok(url) = Url::from_file_path(root_file.path()) {
+        return Some(PlayingContent::DirectFile(url));
+    }
+
     None
 }
 

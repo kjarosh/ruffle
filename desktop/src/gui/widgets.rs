@@ -2,6 +2,7 @@ use crate::gui::text;
 use crate::util::pick_file;
 use egui::{TextEdit, Ui};
 use std::path::Path;
+use rfd::FileDialog;
 use unic_langid::LanguageIdentifier;
 use url::Url;
 
@@ -51,9 +52,19 @@ impl PathOrUrlField {
                         path
                     });
 
-                if let Some(path) = pick_file(true, dir) {
+                if let Some(path) = pick_file(true, dir.clone()) {
                     self.value = path.to_string_lossy().to_string();
+                    tracing::error!("File: {:?}", self.value);
                 }
+                let mut dialog = FileDialog::new()
+                    .set_title("Open a Folder");
+
+                if let Some(ref dir) = dir {
+                    dialog = dialog.set_directory(dir);
+                }
+
+                tracing::error!("Folder: {:?}", dialog.pick_folder());
+
             }
             ui.add_sized(
                 ui.available_size(),
