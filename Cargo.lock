@@ -4384,6 +4384,7 @@ dependencies = [
  "unic-langid",
  "url",
  "vergen",
+ "walkdir",
  "webbrowser",
  "wgpu",
  "winapi",
