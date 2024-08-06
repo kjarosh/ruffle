@@ -488,7 +488,7 @@ impl App {
                     }
                 }
 
-                winit::event::Event::UserEvent(RuffleEvent::BrowseAndOpen(options)) => {
+                winit::event::Event::UserEvent(RuffleEvent::BrowseAndOpenFile(options)) => {
                     let event_loop = event_loop_proxy.clone();
                     let picker = self.gui.borrow().file_picker();
                     tokio::spawn(async move {
