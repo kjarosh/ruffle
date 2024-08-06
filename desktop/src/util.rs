@@ -277,6 +277,40 @@ pub fn pick_file(_in_ui: bool, path: Option<PathBuf>) -> Option<PathBuf> {
     actually_pick_file(path)
 }
 
+pub fn pick_folder(dir: Option<PathBuf>) -> Option<PathBuf> {
+    let mut dialog = FileDialog::new()
+        .set_title("Open a Folder with Flash Files");
+
+    if let Some(dir) = dir {
+        dialog = dialog.set_directory(dir);
+    }
+
+    dialog.pick_folder()
+}
+
+fn actually_pick_folder(dir: Option<PathBuf>) -> Option<PathBuf> {
+    let mut dialog = FileDialog::new()
+        .set_title("Open a Folder");
+
+    if let Some(ref dir) = dir {
+        dialog = dialog.set_directory(dir);
+    }
+
+    let directory = dialog.pick_folder()?;
+
+    let mut dialog = FileDialog::new()
+        .add_filter("Flash Files", &["swf"])
+        .add_filter("All Files", &["*"])
+        .set_title("Select Root Movie");
+
+    if let Some(ref dir) = dir {
+        dialog = dialog.set_directory(dir);
+    }
+
+    let root_movie = dialog.pick_file()?;
+    None
+}
+
 #[cfg(not(feature = "tracy"))]
 pub fn plot_stats_in_tracy(_instance: &wgpu::Instance) {}
 
