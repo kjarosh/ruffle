@@ -182,7 +182,7 @@ impl MenuBar {
             let mut shortcut;
 
             shortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
-            if Button::new(text(locale, "file-menu-open-quick"))
+            if Button::new(text(locale, "file-menu-open-file"))
                 .shortcut_text(ui.ctx().format_shortcut(&shortcut))
                 .ui(ui)
                 .clicked()
