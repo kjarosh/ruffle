@@ -575,7 +575,7 @@ dependencies = [
 
 [[package]]
 name = "build_playerglobal"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "clap",
  "convert_case",
@@ -1705,7 +1705,7 @@ dependencies = [
 
 [[package]]
 name = "exporter"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1873,7 +1873,7 @@ dependencies = [
 
 [[package]]
 name = "flv-rs"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bitflags 2.6.0",
  "thiserror",
@@ -3161,7 +3161,7 @@ dependencies = [
 
 [[package]]
 name = "mocket"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -3193,7 +3193,7 @@ dependencies = [
 
 [[package]]
 name = "naga-agal"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bitflags 2.6.0",
  "insta",
@@ -3204,7 +3204,7 @@ dependencies = [
 
 [[package]]
 name = "naga-pixelbender"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "naga",
@@ -4252,7 +4252,7 @@ checksum = "3cd14fd5e3b777a7422cca79358c57a8f6e3a703d9ac187448d0daf220c2407f"
 
 [[package]]
 name = "ruffle_core"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-channel",
  "bitflags 2.6.0",
@@ -4318,7 +4318,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_desktop"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -4365,7 +4365,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_frontend_utils"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-channel",
  "async-io",
@@ -4388,14 +4388,14 @@ dependencies = [
 
 [[package]]
 name = "ruffle_gc_arena"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "gc-arena",
 ]
 
 [[package]]
 name = "ruffle_input_format"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bitflags 2.6.0",
  "serde",
@@ -4404,7 +4404,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_macros"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "quote",
  "syn 2.0.72",
@@ -4412,7 +4412,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_render"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "approx",
  "byteorder",
@@ -4442,7 +4442,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_render_canvas"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "js-sys",
  "log",
@@ -4455,7 +4455,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_render_webgl"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bytemuck",
  "js-sys",
@@ -4470,7 +4470,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_render_wgpu"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bytemuck",
  "clap",
@@ -4493,7 +4493,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_scanner"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "clap",
  "crossbeam-channel",
@@ -4511,7 +4511,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_socket_format"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -4519,7 +4519,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_test_framework"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "approx",
@@ -4543,7 +4543,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_video"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "ruffle_render",
  "slotmap",
@@ -4553,7 +4553,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_video_external"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bzip2",
  "hex",
@@ -4570,7 +4570,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_video_software"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "flate2",
  "h263-rs",
@@ -4588,7 +4588,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_web"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-channel",
  "base64",
@@ -4625,7 +4625,7 @@ dependencies = [
 
 [[package]]
 name = "ruffle_web_common"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tracing",
  "wasm-bindgen",
@@ -4633,14 +4633,14 @@ dependencies = [
 
 [[package]]
 name = "ruffle_web_safari"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "objc",
 ]
 
 [[package]]
 name = "ruffle_wstr"
-version = "0.1.0"
+version = "1.0.0"
 
 [[package]]
 name = "rustc-demangle"
@@ -5095,7 +5095,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "stub-report"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -5267,7 +5267,7 @@ dependencies = [
 
 [[package]]
 name = "tests"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "env_logger",
