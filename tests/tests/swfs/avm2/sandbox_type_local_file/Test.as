@@ -28,7 +28,7 @@ package {
             function onLoaded(e:Event):void {
                 trace("Local access succeeded: " + e.target.data);
             }
-            loader.load(new URLRequest("file://file.txt"));
+            loader.load(new URLRequest("file.txt"));
         }
 
         private function network():void {
