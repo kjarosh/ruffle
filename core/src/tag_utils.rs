@@ -4,6 +4,8 @@ use swf::{CharacterId, Fixed8, HeaderExt, Rectangle, TagCode, Twips};
 use thiserror::Error;
 use url::Url;
 
+use crate::sandbox::SandboxType;
+
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Couldn't read SWF: {0}")]
@@ -70,6 +72,12 @@ pub struct SwfMovie {
     /// Whether this SwfMovie actually represents a loaded movie or fills in for
     /// something else, like an loaded image, filler movie, or error state.
     is_movie: bool,
+
+    /// Security sandbox type enforced for this movie.
+    ///
+    /// It absolutely cannot be changed after constructing
+    /// the object in order to ensure proper sandboxing.
+    sandbox_type: SandboxType,
 }
 
 impl SwfMovie {
@@ -84,6 +92,8 @@ impl SwfMovie {
             encoding: swf::UTF_8,
             compressed_len: 0,
             is_movie: false,
+            // TODO what security sandbox to use here?
+            sandbox_type: SandboxType::LocalWithFile,
         }
     }
 
@@ -101,6 +111,8 @@ impl SwfMovie {
             parameters: Vec::new(),
             encoding: swf::UTF_8,
             is_movie: false,
+            // TODO what security sandbox to use here?
+            sandbox_type: SandboxType::LocalWithFile,
         }
     }
 
@@ -116,6 +128,8 @@ impl SwfMovie {
             parameters: Vec::new(),
             encoding: swf::UTF_8,
             is_movie: false,
+            // TODO what security sandbox to use here?
+            sandbox_type: SandboxType::LocalWithFile,
         }
     }
 
@@ -134,6 +148,8 @@ impl SwfMovie {
             encoding: swf::UTF_8,
             compressed_len: 0,
             is_movie: false,
+            // TODO what security sandbox to use here?
+            sandbox_type: SandboxType::LocalWithFile,
         }
     }
 
@@ -160,6 +176,7 @@ impl SwfMovie {
         let compressed_len = swf_data.len();
         let swf_buf = swf::read::decompress_swf(swf_data)?;
         let encoding = swf::SwfStr::encoding_for_version(swf_buf.header.version());
+        let sandbox_type = SandboxType::detect(url.as_str(), &swf_buf.header);
         let mut movie = Self {
             header: swf_buf.header,
             data: swf_buf.data,
@@ -169,6 +186,7 @@ impl SwfMovie {
             encoding,
             compressed_len,
             is_movie: true,
+            sandbox_type,
         };
         movie.append_parameters_from_url();
         Ok(movie)
@@ -176,6 +194,7 @@ impl SwfMovie {
 
     /// Construct a movie based on a loaded image (JPEG, GIF or PNG).
     pub fn from_loaded_image(url: String, length: usize) -> Self {
+        let sandbox_type = SandboxType::from_url(url.as_str());
         let mut movie = Self {
             header: HeaderExt::default_with_uncompressed_len(length as i32),
             data: vec![],
@@ -185,6 +204,7 @@ impl SwfMovie {
             encoding: swf::UTF_8,
             compressed_len: length,
             is_movie: false,
+            sandbox_type,
         };
         movie.append_parameters_from_url();
         movie
@@ -285,6 +305,10 @@ impl SwfMovie {
 
     pub fn is_movie(&self) -> bool {
         self.is_movie
+    }
+
+    pub fn sandbox_type(&self) -> SandboxType {
+        self.sandbox_type
     }
 }
 
