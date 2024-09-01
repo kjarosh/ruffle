@@ -62,17 +62,4 @@ impl SandboxType {
             }
         }
     }
-
-    pub fn from_url(url: &str) -> Self {
-        match Url::parse(url) {
-            Ok(url) => {
-                if url.scheme() == "file" {
-                    Self::LocalWithFile
-                } else {
-                    Self::Remote
-                }
-            }
-            Err(_) => Self::LocalWithFile,
-        }
-    }
 }

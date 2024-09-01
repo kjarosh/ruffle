@@ -1,0 +1,7 @@
+Current sandbox type: localWithNetwork
+*** Security Sandbox Violation ***
+Connection to file:///home/kamil/repos/ruffle/tests/tests/swfs/avm2/sandbox_type_local_network/file.txt halted - not permitted from file:///home/kamil/repos/ruffle/tests/tests/swfs/avm2/sandbox_type_local_network/test.swf
+Local access failed: SecurityError: Error #2148: SWF file file:///home/kamil/repos/ruffle/tests/tests/swfs/avm2/sandbox_type_local_network/test.swf cannot access local resource file:///home/kamil/repos/ruffle/tests/tests/swfs/avm2/sandbox_type_local_network/file.txt. Only local-with-filesystem and trusted local SWF files may access local resources.
+Network access succeeded: connected
+Network access succeeded: data sent
+Network access succeeded: data received
