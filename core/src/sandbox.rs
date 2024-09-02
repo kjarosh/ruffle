@@ -73,7 +73,7 @@ impl SandboxType {
 /// is asked for permission before invoking the method.
 /// For the callee, it proves that the caller has asked for the permission.
 ///
-/// Sandbox permit exists only as a compile-time check to make sure
+/// Sandbox permit exists as a compile-time check to make sure
 /// every method invocation was accompanied by the sandbox policy check,
 /// which could have taken place some time earlier.
 pub struct SandboxPermit {
@@ -94,6 +94,17 @@ impl SandboxPermit {
     /// TODO Remove this method when sandbox is fully implemented.
     pub fn sandbox_unimplemented() -> Self {
         Self::new()
+    }
+
+    /// Consume the permit.
+    ///
+    /// This method should be called at the moment an action
+    /// is performed which may be constrained by a sandbox policy.
+    ///
+    /// This method is meant to be used as a compile check to ensure
+    /// that the action was accompanied by the sandbox policy check.
+    pub fn consume(self) {
+        // Do nothing
     }
 }
 
