@@ -1,0 +1,13 @@
+[
+    {
+        "type": "Receive",
+        "expected": [1]
+    },
+    {
+        "type": "Send",
+        "payload": [42]
+    },
+    {
+        "type": "Disconnect"
+    }
+]

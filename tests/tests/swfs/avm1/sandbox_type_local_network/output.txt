@@ -1,0 +1,7 @@
+Current sandbox type: localWithNetwork
+*** Security Sandbox Violation ***
+Connection to file:///home/kamil/repos/ruffle/tests/tests/swfs/avm1/sandbox_type_local_network/params.txt halted - not permitted from file:///home/kamil/repos/ruffle/tests/tests/swfs/avm1/sandbox_type_local_network/test.swf
+Local access failed
+*** Security Sandbox Violation ***
+Connection to localhost:8001 halted - not permitted from file:///home/kamil/repos/ruffle/tests/tests/swfs/avm1/sandbox_type_local_network/test.swf
+Error: Request for resource at xmlsocket://localhost:8001 by requestor from file:///home/kamil/repos/ruffle/tests/tests/swfs/avm1/sandbox_type_local_network/test.swf is denied due to lack of policy file permissions.
