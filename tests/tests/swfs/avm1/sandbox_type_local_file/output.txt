@@ -1,0 +1,5 @@
+Current sandbox type: localWithFile
+*** Security Sandbox Violation ***
+Connection to http://localhost halted - not permitted from file:///home/kamil/repos/ruffle/tests/tests/swfs/avm1/sandbox_type_local_file/test.swf
+-- Untrusted local SWFs may not contact the Internet.
+Local access succeeded: true
