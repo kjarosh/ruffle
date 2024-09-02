@@ -1,6 +1,8 @@
 //! Security Sandbox implementation, see
 //! https://help.adobe.com/en_US/as3/dev/WS5b3ccc516d4fbf351e63e3d118a9b90204-7e3f.html
 
+use std::marker::PhantomData;
+
 use swf::HeaderExt;
 use url::Url;
 
@@ -61,5 +63,36 @@ impl SandboxType {
                 sandbox_type
             }
         }
+    }
+}
+
+/// A sandbox permit is meant to be used as a method parameter
+/// and acts as contract between the method caller and callee.
+///
+/// For the caller, it requires that the [`SandboxManager`]
+/// is asked for permission before invoking the method.
+/// For the callee, it proves that the caller has asked for the permission.
+///
+/// Sandbox permit exists only as a compile-time check to make sure
+/// every method invocation was accompanied by the sandbox policy check,
+/// which could have taken place some time earlier.
+pub struct SandboxPermit {
+    /// Phantom data which ensures that SandboxPermit
+    /// cannot be constructed outside of here.
+    phantom: PhantomData<()>,
+}
+
+impl SandboxPermit {
+    fn new() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
+
+    /// Use this method when sandbox policy check is yet unimplemented.
+    ///
+    /// TODO Remove this method when sandbox is fully implemented.
+    pub fn sandbox_unimplemented() -> Self {
+        Self::new()
     }
 }
