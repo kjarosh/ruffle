@@ -41,6 +41,7 @@ use crate::local_connection::LocalConnections;
 use crate::locale::get_current_date_time;
 use crate::net_connection::NetConnections;
 use crate::prelude::*;
+use crate::sandbox::SandboxManager;
 use crate::socket::Sockets;
 use crate::streams::StreamManager;
 use crate::string::{AvmString, AvmStringInterner};
@@ -337,6 +338,8 @@ pub struct Player {
     mouse_cursor_needs_check: bool,
 
     system: SystemProperties,
+
+    sandbox_manager: SandboxManager,
 
     page_url: Option<String>,
 
@@ -2194,6 +2197,7 @@ impl Player {
                 player_version: this.player_version,
                 swf: &mut this.swf,
                 library,
+                sandbox_manager: &mut this.sandbox_manager,
                 rng: &mut this.rng,
                 renderer: this.renderer.deref_mut(),
                 audio: this.audio.deref_mut(),
@@ -2858,6 +2862,7 @@ impl PlayerBuilder {
                 // Misc. state
                 rng: SmallRng::seed_from_u64(get_current_date_time().timestamp_millis() as u64),
                 system: SystemProperties::new(),
+                sandbox_manager: SandboxManager::new(),
                 page_url: self.page_url.clone(),
                 transform_stack: TransformStack::new(),
                 instance_counter: 0,

@@ -96,3 +96,17 @@ impl SandboxPermit {
         Self::new()
     }
 }
+
+pub struct SandboxManager {}
+
+impl Default for SandboxManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SandboxManager {
+    pub fn new() -> Self {
+        Self {}
+    }
+}

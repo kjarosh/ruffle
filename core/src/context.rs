@@ -32,6 +32,7 @@ use crate::net_connection::NetConnections;
 use crate::player::PostFrameCallback;
 use crate::player::{MouseData, Player};
 use crate::prelude::*;
+use crate::sandbox::SandboxManager;
 use crate::socket::Sockets;
 use crate::streams::StreamManager;
 use crate::string::AvmString;
@@ -101,6 +102,9 @@ pub struct UpdateContext<'gc> {
     /// The library containing character definitions for this SWF.
     /// Used to instantiate a `DisplayObject` of a given ID.
     pub library: &'gc mut Library<'gc>,
+
+    /// Sandbox manager used for enforcing sandbox policies.
+    pub sandbox_manager: &'gc mut SandboxManager,
 
     /// The version of the Flash Player we are emulating.
     /// TODO: This is a little confusing because this represents the player's max SWF version,
