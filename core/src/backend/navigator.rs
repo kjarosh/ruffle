@@ -1,6 +1,7 @@
 //! Browser-related platform functions
 
 use crate::loader::Error;
+use crate::sandbox::{SandboxPermit, SandboxPermitScope};
 use crate::socket::{ConnectionState, SocketAction, SocketHandle};
 use crate::string::WStr;
 use async_channel::{Receiver, Sender};
@@ -276,7 +277,11 @@ pub trait NavigatorBackend: Downcast {
     );
 
     /// Fetch data and return it some time in the future.
-    fn fetch(&self, request: Request) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse>;
+    fn fetch(
+        &self,
+        request: Request,
+        permit: SandboxPermit,
+    ) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse>;
 
     /// Take a URL string and resolve it to the actual URL from which a file
     /// can be fetched. This includes handling of relative links and pre-processing.
@@ -434,8 +439,12 @@ impl NavigatorBackend for NullNavigatorBackend {
     ) {
     }
 
-    fn fetch(&self, request: Request) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse> {
-        fetch_path(self, "NullNavigatorBackend", request.url(), None)
+    fn fetch(
+        &self,
+        request: Request,
+        permit: SandboxPermit,
+    ) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse> {
+        fetch_path(self, "NullNavigatorBackend", request.url(), None, permit)
     }
 
     fn resolve_url(&self, url: &str) -> Result<Url, ParseError> {
@@ -570,11 +579,12 @@ pub fn resolve_url_with_relative_base_path<NavigatorType: NavigatorBackend>(
 /// It tries to fetch the given URL as a local path and read and return
 /// its content. It returns an ErrorResponse if the URL is not valid, not
 /// local or a local path that can't be read.
-pub fn fetch_path<NavigatorType: NavigatorBackend>(
+fn fetch_path<NavigatorType: NavigatorBackend>(
     navigator: &NavigatorType,
     navigator_name: &str,
     url: &str,
     base_path: Option<&Path>,
+    permit: SandboxPermit,
 ) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse> {
     struct LocalResponse {
         url: String,
@@ -679,6 +689,8 @@ pub fn fetch_path<NavigatorType: NavigatorBackend>(
             "",
         ));
     };
+
+    permit.consume(SandboxPermitScope::LocalFileAccess);
 
     Box::pin(async move {
         let response: Box<dyn SuccessResponse> = Box::new(LocalResponse {

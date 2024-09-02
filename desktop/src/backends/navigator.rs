@@ -1,4 +1,5 @@
 use rfd::{AsyncMessageDialog, MessageButtons, MessageDialog, MessageDialogResult, MessageLevel};
+use ruffle_core::sandbox::{SandboxPermit, SandboxPermitScope};
 use ruffle_frontend_utils::backends::navigator::NavigatorInterface;
 use std::fs::File;
 use std::io;
@@ -39,7 +40,8 @@ impl NavigatorInterface for DesktopNavigatorInterface {
             .send_event(RuffleEvent::AskToOpenUrl(url));
     }
 
-    fn open_file(&self, path: &Path) -> io::Result<File> {
+    fn open_file(&self, path: &Path, permit: SandboxPermit) -> io::Result<File> {
+        permit.consume(SandboxPermitScope::LocalFileAccess);
         File::open(path).or_else(|e| {
             if cfg!(feature = "sandbox") {
                 use rfd::FileDialog;

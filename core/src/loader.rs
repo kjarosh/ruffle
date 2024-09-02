@@ -25,6 +25,7 @@ use crate::events::ClipEvent;
 use crate::frame_lifecycle::catchup_display_object_to_frame;
 use crate::limits::ExecutionLimit;
 use crate::player::{Player, PostFrameCallback};
+use crate::sandbox::SandboxPermit;
 use crate::streams::NetStream;
 use crate::string::AvmString;
 use crate::tag_utils::SwfMovie;
@@ -353,7 +354,8 @@ impl<'gc> LoadManager<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
 
             match Loader::wait_for_full_response(fetch).await {
                 Ok((body, url, _status, _redirected)) => {
@@ -1007,7 +1009,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
             let response = fetch.await.map_err(|error| {
                 player
                     .lock()
@@ -1081,7 +1084,8 @@ impl<'gc> Loader<'gc> {
             let request_url = request.url().to_string();
             let resolved_url = player.lock().unwrap().navigator().resolve_url(&request_url);
 
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
 
             let mut replacing_root_movie = false;
             player.lock().unwrap().update(|uc| -> Result<(), Error> {
@@ -1271,7 +1275,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
 
             let response = fetch.await.map_err(|e| e.error)?;
             let response_encoding = response.text_encoding();
@@ -1355,7 +1360,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
             let response = Self::wait_for_full_response(fetch).await;
 
             // Fire the load handler.
@@ -1455,7 +1461,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
             let response = Self::wait_for_full_response(fetch).await;
 
             // Fire the load handler.
@@ -1527,7 +1534,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
             let response = Self::wait_for_full_response(fetch).await;
 
             player.lock().unwrap().update(|uc| {
@@ -1730,7 +1738,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
             let response = Self::wait_for_full_response(fetch).await;
 
             // Fire the load handler.
@@ -1793,7 +1802,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
             let response = Self::wait_for_full_response(fetch).await;
 
             player.lock().unwrap().update(|uc| {
@@ -1895,7 +1905,8 @@ impl<'gc> Loader<'gc> {
             .expect("Could not upgrade weak reference to player");
 
         Box::pin(async move {
-            let fetch = player.lock().unwrap().navigator().fetch(request);
+            let permit = SandboxPermit::sandbox_unimplemented();
+            let fetch = player.lock().unwrap().navigator().fetch(request, permit);
             match fetch.await {
                 Ok(mut response) => {
                     let expected_length = response.expected_length();
@@ -3009,8 +3020,9 @@ impl<'gc> Loader<'gc> {
 
             // Download the data
             let req = Request::get(url.clone());
+            let permit = SandboxPermit::sandbox_unimplemented();
             // Doing this in two steps to prevent holding the player lock during fetch
-            let future = player.lock().unwrap().navigator().fetch(req);
+            let future = player.lock().unwrap().navigator().fetch(req, permit);
             let download_res = Self::wait_for_full_response(future).await;
 
             // Fire the load handler.
@@ -3244,8 +3256,9 @@ impl<'gc> Loader<'gc> {
                     "multipart/form-data; boundary=------------BOUNDARY".to_string(),
                 )),
             );
+            let permit = SandboxPermit::sandbox_unimplemented();
             // Doing this in two steps to prevent holding the player lock during fetch
-            let future = player.lock().unwrap().navigator().fetch(req);
+            let future = player.lock().unwrap().navigator().fetch(req, permit);
             let result = future.await;
 
             // Fire the load handler.

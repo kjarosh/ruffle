@@ -1,8 +1,6 @@
 //! Security Sandbox implementation, see
 //! https://help.adobe.com/en_US/as3/dev/WS5b3ccc516d4fbf351e63e3d118a9b90204-7e3f.html
 
-use std::marker::PhantomData;
-
 use swf::HeaderExt;
 use url::Url;
 
@@ -66,6 +64,23 @@ impl SandboxType {
     }
 }
 
+/// Every permit emitted by the sandbox manager is valid
+/// for a certain scope, which represents the possible
+/// set of actions that are permitted.
+#[derive(PartialEq, Eq, Debug)]
+pub enum SandboxPermitScope {
+    /// Any action is permitted.
+    ///
+    /// TODO Remove
+    All,
+
+    /// Local file access is permitted.
+    LocalFileAccess,
+
+    /// Network access is permitted.
+    NetworkAccess,
+}
+
 /// A sandbox permit is meant to be used as a method parameter
 /// and acts as contract between the method caller and callee.
 ///
@@ -77,15 +92,29 @@ impl SandboxType {
 /// every method invocation was accompanied by the sandbox policy check,
 /// which could have taken place some time earlier.
 pub struct SandboxPermit {
-    /// Phantom data which ensures that SandboxPermit
-    /// cannot be constructed outside of here.
-    phantom: PhantomData<()>,
+    scope: SandboxPermitScope,
+    active: bool,
+}
+
+impl Drop for SandboxPermit {
+    fn drop(&mut self) {
+        if self.active {
+            panic!(
+                "Potential Security Sandbox Violation. \
+                Security sandbox has detected an ignored permit, \
+                which means an action might have been performed \
+                which was not covered by security sandbox protections. \
+                The permit has to be either consumed or dismissed."
+            );
+        }
+    }
 }
 
 impl SandboxPermit {
-    fn new() -> Self {
+    fn new(scope: SandboxPermitScope) -> Self {
         Self {
-            phantom: PhantomData,
+            scope,
+            active: true,
         }
     }
 
@@ -93,18 +122,42 @@ impl SandboxPermit {
     ///
     /// TODO Remove this method when sandbox is fully implemented.
     pub fn sandbox_unimplemented() -> Self {
-        Self::new()
+        Self {
+            scope: SandboxPermitScope::All,
+            active: false,
+        }
     }
 
     /// Consume the permit.
     ///
-    /// This method should be called at the moment an action
+    /// This method should be called right before the moment an action
     /// is performed which may be constrained by a sandbox policy.
     ///
     /// This method is meant to be used as a compile check to ensure
     /// that the action was accompanied by the sandbox policy check.
-    pub fn consume(self) {
-        // Do nothing
+    /// The scope parameter additionally ensures that the check was
+    /// consistent with the actual action that is being performed.
+    pub fn consume(mut self, scope: SandboxPermitScope) {
+        if self.scope != SandboxPermitScope::All && self.scope != scope {
+            panic!(
+                "Potential Security Sandbox Violation. \
+                Security sandbox has prevented an attempt to \
+                perform an action which did not match its permit scope. \
+                Expected scope: {:?}, actual scope: {:?}.",
+                self.scope, scope,
+            );
+        }
+
+        self.active = false;
+        drop(self);
+    }
+
+    /// Dismiss the permit instead of consuming it.
+    ///
+    /// Use when there's no action to perform.
+    pub fn dismiss(mut self) {
+        self.active = false;
+        drop(self);
     }
 }
 

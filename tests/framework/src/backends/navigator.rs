@@ -9,6 +9,7 @@ use ruffle_core::backend::navigator::{
 };
 use ruffle_core::indexmap::IndexMap;
 use ruffle_core::loader::Error;
+use ruffle_core::sandbox::{SandboxPermit, SandboxPermitScope};
 use ruffle_core::socket::{ConnectionState, SocketAction, SocketHandle};
 use ruffle_core::swf::Encoding;
 use ruffle_socket_format::SocketEvent;
@@ -116,7 +117,11 @@ impl NavigatorBackend for TestNavigatorBackend {
         }
     }
 
-    fn fetch(&self, request: Request) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse> {
+    fn fetch(
+        &self,
+        request: Request,
+        permit: SandboxPermit,
+    ) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse> {
         if request.url().contains("?debug-success") {
             return Box::pin(async move {
                 let response: Box<dyn SuccessResponse> = Box::new(TestResponse {
@@ -183,14 +188,14 @@ impl NavigatorBackend for TestNavigatorBackend {
         let base_path = self.relative_base_path.clone();
 
         Box::pin(async move {
-            let path = if url.scheme() == "file" {
+            let (path, network) = if url.scheme() == "file" {
                 // Flash supports query parameters with local urls.
                 // SwfMovie takes care of exposing those to ActionScript -
                 // when we actually load a filesystem url, strip them out.
                 let mut filesystem_url = url.clone();
                 filesystem_url.set_query(None);
 
-                base_path
+                let path = base_path
                     .join(
                         percent_decode_str(filesystem_url.path())
                             .decode_utf8()
@@ -202,7 +207,9 @@ impl NavigatorBackend for TestNavigatorBackend {
                     .map_err(|e| ErrorResponse {
                         url: url.to_string(),
                         error: Error::FetchError(e.to_string()),
-                    })?
+                    })?;
+
+                (path, false)
             } else {
                 // Turn a url like https://localhost/foo/bar to {base_path}/localhost/foo/bar
                 let mut path = base_path.clone();
@@ -225,8 +232,15 @@ impl NavigatorBackend for TestNavigatorBackend {
                             error: Error::FetchError(e.to_string()),
                         })?;
                 }
-                path
+                (path, true)
             };
+
+            if network {
+                // We are simulating a network request, even when opening a local file
+                permit.consume(SandboxPermitScope::NetworkAccess);
+            } else {
+                permit.consume(SandboxPermitScope::LocalFileAccess);
+            }
 
             let body = read_bytes(&path).map_err(|error| ErrorResponse {
                 url: url.to_string(),

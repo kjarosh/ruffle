@@ -12,6 +12,7 @@ use ruffle_core::backend::navigator::{
 use ruffle_core::config::NetworkingAccessMode;
 use ruffle_core::indexmap::IndexMap;
 use ruffle_core::loader::Error;
+use ruffle_core::sandbox::SandboxPermit;
 use ruffle_core::socket::{ConnectionState, SocketAction, SocketHandle};
 use ruffle_core::swf::Encoding;
 use ruffle_core::Player;
@@ -236,10 +237,15 @@ impl NavigatorBackend for WebNavigatorBackend {
         };
     }
 
-    fn fetch(&self, request: Request) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse> {
+    fn fetch(
+        &self,
+        request: Request,
+        permit: SandboxPermit,
+    ) -> OwnedFuture<Box<dyn SuccessResponse>, ErrorResponse> {
         let url = match self.resolve_url(request.url()) {
             Ok(url) => {
                 if url.scheme() == "file" {
+                    permit.dismiss();
                     return async_return(create_specific_fetch_error(
                         "WASM target can't fetch local URL",
                         url.as_str(),
@@ -250,6 +256,7 @@ impl NavigatorBackend for WebNavigatorBackend {
                 }
             }
             Err(e) => {
+                permit.dismiss();
                 return async_return(create_fetch_error(request.url(), e));
             }
         };
