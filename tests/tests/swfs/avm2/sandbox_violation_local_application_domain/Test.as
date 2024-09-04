@@ -7,18 +7,15 @@ package {
     import flash.net.URLRequest;
     import flash.system.Security;
     import flash.system.LoaderContext;
-    import flash.system.SecurityDomain;
+    import flash.system.ApplicationDomain;
     import flash.net.Socket;
-    import flash.utils.describeType;
 
     public class Test extends Sprite {
         public function Test() {
-            trace(SecurityDomain.currentDomain.domainID);
-            trace(describeType(SecurityDomain));
             var loader:Loader = new Loader();
-            var ctx:LoaderContext = new LoaderContext(false, null, SecurityDomain.currentDomain);
+            var ctx:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
             try {
-                loader.load(new URLRequest("other.swf"), ctx);
+                loader.load(new URLRequest("localhost/loaded.swf"), ctx);
             } catch (e) {
                 var message = "" + e;
 

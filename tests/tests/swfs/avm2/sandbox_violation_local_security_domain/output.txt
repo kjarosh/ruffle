@@ -1,1 +1,12 @@
+25BF8E1A2393F1108D37029B3DF5593236C755742EC93465BBAFA9B290BDDCF6
+<type name="flash.system::SecurityDomain" base="Class" isDynamic="true" isFinal="true" isStatic="true">
+  <extendsClass type="Class"/>
+  <extendsClass type="Object"/>
+  <accessor name="currentDomain" access="readonly" type="flash.system::SecurityDomain" declaredBy="flash.system::SecurityDomain"/>
+  <accessor name="prototype" access="readonly" type="*" declaredBy="Class"/>
+  <factory type="flash.system::SecurityDomain">
+    <extendsClass type="Object"/>
+    <accessor name="domainID" access="readonly" type="String" declaredBy="flash.system::SecurityDomain"/>
+  </factory>
+</type>
 Error: SecurityError: Error #2142: Security sandbox violation: local SWF files cannot use the LoaderContext.securityDomain property. file://test.swf was attempting to load file://other.swf.

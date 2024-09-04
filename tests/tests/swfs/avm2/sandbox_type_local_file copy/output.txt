@@ -1,0 +1,4 @@
+Current sandbox type: localWithFile
+Network access failed: SecurityError: Error #2010: Local-with-filesystem SWF files are not permitted to use sockets.
+Local access succeeded: my private data
+
