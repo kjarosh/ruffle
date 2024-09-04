@@ -1,0 +1,1 @@
+Error: SecurityError: Error #2142: Security sandbox violation: local SWF files cannot use the LoaderContext.securityDomain property. file://test.swf was attempting to load file://other.swf.
