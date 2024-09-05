@@ -1,5 +1,5 @@
 use crate::gui::{text, LocalizableText};
-use egui::{Align2, Ui, Window};
+use egui::{Align2, Id, Ui, Window};
 use unic_langid::LanguageIdentifier;
 
 pub struct MessageDialogConfiguration {
@@ -14,12 +14,13 @@ impl MessageDialogConfiguration {
 }
 
 pub struct MessageDialog {
+    id: Id,
     config: MessageDialogConfiguration,
 }
 
 impl MessageDialog {
-    pub fn new(config: MessageDialogConfiguration) -> Self {
-        Self { config }
+    pub fn new(id: Id, config: MessageDialogConfiguration) -> Self {
+        Self { id, config }
     }
 
     pub fn show(&mut self, locale: &LanguageIdentifier, egui_ctx: &egui::Context) -> bool {
@@ -27,6 +28,7 @@ impl MessageDialog {
         let mut should_close = false;
 
         Window::new(self.config.title.localize(locale))
+            .id(self.id.with("window"))
             .open(&mut keep_open)
             .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
             .collapsible(false)

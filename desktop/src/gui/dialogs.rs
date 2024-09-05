@@ -31,7 +31,7 @@ pub struct Dialogs {
     bookmarks_dialog: Option<BookmarksDialog>,
     bookmark_add_dialog: Option<BookmarkAddDialog>,
     open_url_dialog: Option<OpenUrlDialog>,
-    message_dialog: Option<MessageDialog>,
+    message_dialogs: Vec<MessageDialog>,
 
     open_dialog: OpenDialog,
     is_open_dialog_visible: bool,
@@ -63,7 +63,7 @@ impl Dialogs {
             bookmarks_dialog: None,
             bookmark_add_dialog: None,
             open_url_dialog: None,
-            message_dialog: None,
+            message_dialogs: Vec::new(),
 
             open_dialog: OpenDialog::new(
                 player_options,
@@ -136,7 +136,8 @@ impl Dialogs {
                 self.open_url_dialog = Some(OpenUrlDialog::new(url));
             }
             DialogDescriptor::ShowMessage(config) => {
-                self.message_dialog = Some(MessageDialog::new(config));
+                let id = egui::Id::new("message-dialog").with(self.message_dialogs.len());
+                self.message_dialogs.push(MessageDialog::new(id, config));
             }
         }
     }
@@ -154,7 +155,7 @@ impl Dialogs {
         self.show_volume_controls(locale, egui_ctx, player);
         self.show_about_dialog(locale, egui_ctx);
         self.show_open_url_dialog(locale, egui_ctx);
-        self.show_message_dialog(locale, egui_ctx);
+        self.show_message_dialogs(locale, egui_ctx);
     }
 
     fn show_open_dialog(&mut self, locale: &LanguageIdentifier, egui_ctx: &egui::Context) {
@@ -229,14 +230,8 @@ impl Dialogs {
         }
     }
 
-    fn show_message_dialog(&mut self, locale: &LanguageIdentifier, egui_ctx: &egui::Context) {
-        let keep_open = if let Some(dialog) = &mut self.message_dialog {
-            dialog.show(locale, egui_ctx)
-        } else {
-            true
-        };
-        if !keep_open {
-            self.message_dialog = None;
-        }
+    fn show_message_dialogs(&mut self, locale: &LanguageIdentifier, egui_ctx: &egui::Context) {
+        self.message_dialogs
+            .retain_mut(|md| md.show(locale, egui_ctx));
     }
 }
