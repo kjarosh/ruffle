@@ -11,20 +11,13 @@ jobs:
 
     if: github.repository == 'kjarosh/ruffle'
 
+    strategy:
+      max-parallel: 1
     steps:
-      - name: Install dependencies
-        run: sudo apt-get install -y appstream gettext itstool
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare metainfo translations
-        working-directory: desktop/packages/linux
-        run: |
-          mkdir -p locale
-          itstool -i /usr/share/gettext/its/metainfo.its -o locale/rs.ruffle.Ruffle.metainfo.xml.pot rs.ruffle.Ruffle.metainfo.xml
-
-      - name: Crowdin pull
+      - name: Crowdin push
         uses: crowdin/github-action@v2
         with:
           config: 'crowdin.yml'
@@ -32,32 +25,7 @@ jobs:
           upload_translations: false
           download_translations: true
           localization_branch_name: l10n_crowdin_translations
-          create_pull_request: false
-          push_translations: false
-          push_sources: false
-        env:
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare metainfo translations
-        working-directory: desktop/packages/linux
-        run: |
-          for f in locale/*.po; do
-            msgfmt "$f" -o "$f.mo"
-          done
-          itstool -j rs.ruffle.Ruffle.metainfo.xml -o rs.ruffle.Ruffle.metainfo.out.xml locale/*.mo
-
-      - name: Crowdin PR
-        uses: crowdin/github-action@v2
-        with:
-          config: 'crowdin.yml'
-          upload_sources: false
-          upload_translations: false
-          download_translations: false
-          localization_branch_name: l10n_crowdin_translations
-
-          push_translations: true
-          push_sources: true
           create_pull_request: true
           pull_request_title: 'chore: Update translations'
           pull_request_body: 'New Crowdin pull request with translations'

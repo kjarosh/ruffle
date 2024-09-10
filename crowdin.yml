@@ -16,22 +16,22 @@ files:
     # https://store.crowdin.com/chrome-json
     type: chrome
 
-  - source: /core/assets/texts/en-US/*.ftl
-    translation: /core/assets/texts/%locale%/%original_file_name%
-    dest: /core/%original_file_name%
-    type: ftl
+  # - source: /core/assets/texts/en-US/*.ftl
+  #   translation: /core/assets/texts/%locale%/%original_file_name%
+  #   dest: /core/%original_file_name%
+  #   type: ftl
 
-  - source: /desktop/assets/texts/en-US/*.ftl
-    translation: /desktop/assets/texts/%locale%/%original_file_name%
-    dest: /desktop/%original_file_name%
-    type: ftl
+  # - source: /desktop/assets/texts/en-US/*.ftl
+  #   translation: /desktop/assets/texts/%locale%/%original_file_name%
+  #   dest: /desktop/%original_file_name%
+  #   type: ftl
 
-  - source: /web/packages/core/texts/en-US/*.ftl
-    translation: /web/packages/core/texts/%locale%/%original_file_name%
-    dest: /web/core/%original_file_name%
-    type: ftl
+  # - source: /web/packages/core/texts/en-US/*.ftl
+  #   translation: /web/packages/core/texts/%locale%/%original_file_name%
+  #   dest: /web/core/%original_file_name%
+  #   type: ftl
 
-  - source: /desktop/packages/linux/locale/*.pot
-    translation: /desktop/packages/linux/locale/%file_name%-%locale%.po
-    dest: /desktop/linux/%original_file_name%
-    type: gettext
+  - source: /test.json
+    translation: /test.json
+    dest: /%original_file_name%
+    format: "custom_multilingual_json"
