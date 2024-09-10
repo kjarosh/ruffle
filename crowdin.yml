@@ -32,8 +32,7 @@ files:
   #   type: ftl
 
   - source: /test.json
-    export_patterns:
-      - phrase: /locales/messages.json
-        target: /locales/messages.json
+    translation: /test.json
+    multilingual: true
     dest: /%original_file_name%
     format: "custom_multilingual_json"
