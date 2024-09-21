@@ -27,12 +27,12 @@ jobs:
           git checkout -b l10n_crowdin_translations
           git add -A
           git commit -m 'chore: Update translations from Crowdin'
-          git push -f
+          git push --set-upstream origin l10n_crowdin_translations --force
 
       - name: Create a PR
         run: |
           gh pr create \
-            --title'chore: Update translations' \
+            --title 'chore: Update translations' \
             --body 'New Crowdin pull request with translations' \
             --base master \
             --label T-chore \
