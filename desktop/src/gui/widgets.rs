@@ -71,6 +71,23 @@ impl PathOrUrlField {
                 });
             }
 
+            if ui.button("Open folder").clicked() {
+                let dir = self
+                    .result
+                    .as_ref()
+                    .filter(|url| url.scheme() == "file")
+                    .and_then(|url| url.to_file_path().ok())
+                    .map(|mut path| {
+                        path.pop();
+                        path
+                    });
+
+                let picker = self.picker.clone();
+                tokio::spawn(async move {
+                    let _ = picker.pick_ruffle_directory(dir).await;
+                });
+            }
+
             let mut value_locked = Self::lock_value(&self.value);
             let mut value = value_locked.clone();
             ui.add_sized(
