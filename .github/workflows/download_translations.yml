@@ -40,7 +40,7 @@ jobs:
 
       - name: Create a PR
         run: |
-          gh pr create \
+          gh pr view l10n_crowdin_translations || gh pr create \
             --title 'chore: Update translations' \
             --body 'New Crowdin pull request with translations 🎉' \
             --head l10n_crowdin_translations \
