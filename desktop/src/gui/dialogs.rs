@@ -4,6 +4,7 @@ pub mod message_dialog;
 pub mod network_access_dialog;
 mod open_dialog;
 mod open_url_dialog;
+pub mod pick_path_dialog;
 mod preferences_dialog;
 mod volume_controls;
 
@@ -15,6 +16,7 @@ use message_dialog::{MessageDialog, MessageDialogConfiguration};
 use network_access_dialog::{NetworkAccessDialog, NetworkAccessDialogConfiguration};
 use open_dialog::OpenDialog;
 use open_url_dialog::OpenUrlDialog;
+use pick_path_dialog::{PickPathDialog, PickPathDialogConfiguration};
 use preferences_dialog::PreferencesDialog;
 use ruffle_core::Player;
 use std::{collections::VecDeque, sync::Weak};
@@ -34,6 +36,7 @@ pub struct Dialogs {
     bookmark_add_dialog: Option<BookmarkAddDialog>,
     open_url_dialog: Option<OpenUrlDialog>,
     message_dialog: Option<MessageDialog>,
+    pick_path_dialog: Option<PickPathDialog>,
 
     // Use a queue for the following dialogs in order to:
     //  1. support handling multiple instances of them,
@@ -56,6 +59,7 @@ pub enum DialogDescriptor {
     OpenUrl(url::Url),
     ShowMessage(MessageDialogConfiguration),
     NetworkAccess(NetworkAccessDialogConfiguration),
+    PickPath(PickPathDialogConfiguration),
 }
 
 impl Dialogs {
@@ -66,13 +70,14 @@ impl Dialogs {
         window: Weak<winit::window::Window>,
         event_loop: EventLoopProxy<RuffleEvent>,
     ) -> Self {
-        let picker = FilePicker::new(window, preferences.clone());
+        let picker = FilePicker::new(window, preferences.clone(), event_loop.clone());
         Self {
             preferences_dialog: None,
             bookmarks_dialog: None,
             bookmark_add_dialog: None,
             open_url_dialog: None,
             message_dialog: None,
+            pick_path_dialog: None,
 
             network_access_dialog_queue: VecDeque::new(),
 
@@ -152,6 +157,9 @@ impl Dialogs {
             DialogDescriptor::NetworkAccess(config) => self
                 .network_access_dialog_queue
                 .push_back(NetworkAccessDialog::new(config)),
+            DialogDescriptor::PickPath(config) => {
+                self.pick_path_dialog = Some(PickPathDialog::new(config));
+            }
         }
     }
 
@@ -170,6 +178,7 @@ impl Dialogs {
         self.show_open_url_dialog(locale, egui_ctx);
         self.show_message_dialog(locale, egui_ctx);
         self.show_network_access_dialog(locale, egui_ctx);
+        self.show_pick_path_dialog(locale, egui_ctx);
     }
 
     fn show_open_dialog(&mut self, locale: &LanguageIdentifier, egui_ctx: &egui::Context) {
@@ -267,6 +276,17 @@ impl Dialogs {
         };
         if !keep_open {
             self.network_access_dialog_queue.pop_front();
+        }
+    }
+
+    fn show_pick_path_dialog(&mut self, locale: &LanguageIdentifier, egui_ctx: &egui::Context) {
+        let keep_open = if let Some(dialog) = &mut self.pick_path_dialog {
+            dialog.show(locale, egui_ctx)
+        } else {
+            true
+        };
+        if !keep_open {
+            self.pick_path_dialog = None;
         }
     }
 }
