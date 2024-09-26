@@ -40,7 +40,10 @@ jobs:
 
       - name: Create a PR
         run: |
-          gh pr view l10n_crowdin_translations || gh pr create \
+          prs=$(gh pr list --base master --head l10n_crowdin_translations --limit 1 --json id | jq length)
+          if [ "$prs" = 1 ]; then exit 0; fi
+
+          gh pr create \
             --title 'chore: Update translations' \
             --body 'New Crowdin pull request with translations 🎉' \
             --head l10n_crowdin_translations \
