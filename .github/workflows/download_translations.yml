@@ -41,7 +41,7 @@ jobs:
       - name: Create a PR
         run: |
           prs=$(gh pr list --base master --head l10n_crowdin_translations --limit 1 --json id | jq length)
-          if [ "$prs" = 1 ]; then exit 0; fi
+          if [ "$prs" = 1 ]; then echo "PR already exists"; exit 0; fi
 
           gh pr create \
             --title 'chore: Update translations' \
