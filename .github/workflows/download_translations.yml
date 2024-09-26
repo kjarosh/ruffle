@@ -43,6 +43,7 @@ jobs:
           gh pr create \
             --title 'chore: Update translations' \
             --body 'New Crowdin pull request with translations 🎉' \
+            --head l10n_crowdin_translations \
             --base master \
             --label T-chore \
             --label A-i18n
