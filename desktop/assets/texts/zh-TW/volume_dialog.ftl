@@ -1,3 +1,3 @@
-volume-controls = 音量控制
-volume-controls-mute = 靜音
-volume-controls-volume = 音量
+volume-controls = Volume controls
+volume-controls-mute = Mute
+volume-controls-volume = Volume

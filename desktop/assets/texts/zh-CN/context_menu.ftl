@@ -1,1 +1,1 @@
-context-menu-exit-fullscreen = 退出全屏
+context-menu-exit-fullscreen = Exit Full Screen

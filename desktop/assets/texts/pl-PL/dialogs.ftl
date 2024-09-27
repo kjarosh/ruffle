@@ -1,2 +1,2 @@
 dialog-ok = OK
-dialog-cancel = Anuluj
+dialog-cancel = Cancel

@@ -1,5 +1,5 @@
-open-dialog = 打开文件或网址
-open-dialog-path = 文件或网址
-open-dialog-add-parameter = 添加
-open-dialog-remove-parameter = 移除
-open-dialog-remove-parameters = 全部移除
+open-dialog = Open File or URL
+open-dialog-path = File or URL
+open-dialog-add-parameter = Add
+open-dialog-remove-parameter = Remove
+open-dialog-remove-parameters = Remove all

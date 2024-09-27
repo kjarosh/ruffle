@@ -1,3 +1,3 @@
-open-url-dialog-title = 打开网页？
-open-url-dialog-message = 该影片想要打开以下网页，要打开吗？
-open-url-dialog-open = 打开
+open-url-dialog-title = Open Website?
+open-url-dialog-message = The movie wants to open the following website, do you want to go there?
+open-url-dialog-open = Open

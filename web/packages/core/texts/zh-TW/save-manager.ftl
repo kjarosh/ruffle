@@ -1,10 +1,10 @@
-save-delete-prompt = 你確定要刪除這個存檔嗎？
+save-delete-prompt = Are you sure you want to delete this save file?
 save-reload-prompt =
-    唯一方法只有 { $action ->
-        [delete] 刪除
-       *[replace] 取代
-    } 這個存檔不會完全取代直到重新啟動. 你需要繼續嗎?
-save-download = 下載
-save-replace = 取代
-save-delete = 刪除
-save-backup-all = 下載所有存檔檔案。
+    The only way to { $action ->
+        [delete] delete
+       *[replace] replace
+    } this save file without potential conflict is to reload this content. Do you wish to continue anyway?
+save-download = Download
+save-replace = Replace
+save-delete = Delete
+save-backup-all = Download all save files

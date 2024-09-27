@@ -1,2 +1,2 @@
-volume-controls-mute = 静音
-volume-controls-unmute = 取消静音
+volume-controls-mute = Mute
+volume-controls-unmute = Unmute

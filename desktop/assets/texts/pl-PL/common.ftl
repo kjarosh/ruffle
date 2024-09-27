@@ -1,8 +1,8 @@
-language-name = Polski (Polska)
-start = Rozpocznij
-browse = Przeglądaj
-save = Zapisz
-cancel = Anuluj
-remove = Usuń
-enable = Włącz
-disable = Wyłącz
+language-name = English (United States)
+start = Start
+browse = Browse
+save = Save
+cancel = Cancel
+remove = Remove
+enable = Enable
+disable = Disable

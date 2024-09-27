@@ -1,12 +1,12 @@
-context-menu-download-swf = 下載SWF檔案
-context-menu-copy-debug-info = 複製除錯資訊
-context-menu-open-save-manager = 開啟存檔管理器
+context-menu-download-swf = Download .swf
+context-menu-copy-debug-info = Copy debug info
+context-menu-open-save-manager = Open Save Manager
 context-menu-about-ruffle =
     { $flavor ->
-        [extension] 關於Ruffle擴充功能 ({ $version })
-       *[other] 關於Ruffle ({ $version })
+        [extension] About Ruffle Extension ({ $version })
+       *[other] About Ruffle ({ $version })
     }
-context-menu-hide = 隱藏菜單
-context-menu-exit-fullscreen = 退出全螢幕
-context-menu-enter-fullscreen = 進入全螢幕
-context-menu-volume-controls = 音量控制
+context-menu-hide = Hide this menu
+context-menu-exit-fullscreen = Exit fullscreen
+context-menu-enter-fullscreen = Enter fullscreen
+context-menu-volume-controls = Volume controls

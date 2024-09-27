@@ -1,8 +1,8 @@
-language-name = 简体中文
-start = 启动
-browse = 浏览
-save = 保存
-cancel = 取消
-remove = 删除
-enable = 启用
-disable = 禁用
+language-name = English (United States)
+start = Start
+browse = Browse
+save = Save
+cancel = Cancel
+remove = Remove
+enable = Enable
+disable = Disable

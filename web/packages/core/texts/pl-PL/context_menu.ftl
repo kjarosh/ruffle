@@ -1,12 +1,12 @@
-context-menu-download-swf = Pobierz .swf
-context-menu-copy-debug-info = Kopiuj informacje debugowania
-context-menu-open-save-manager = Otwórz Menadżer Zapisów
+context-menu-download-swf = Download .swf
+context-menu-copy-debug-info = Copy debug info
+context-menu-open-save-manager = Open Save Manager
 context-menu-about-ruffle =
     { $flavor ->
-        [extension] O Rozszerzeniu Ruffle ({ $version })
-       *[other] O Ruffle ({ $version })
+        [extension] About Ruffle Extension ({ $version })
+       *[other] About Ruffle ({ $version })
     }
-context-menu-hide = Ukryj to menu
-context-menu-exit-fullscreen = Zamknij pełny ekran
-context-menu-enter-fullscreen = Pełny ekran
-context-menu-volume-controls = Sterowanie głośnością
+context-menu-hide = Hide this menu
+context-menu-exit-fullscreen = Exit fullscreen
+context-menu-enter-fullscreen = Enter fullscreen
+context-menu-volume-controls = Volume controls

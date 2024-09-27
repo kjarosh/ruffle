@@ -1,77 +1,77 @@
-network-settings = 网络设置
-player-settings = 播放器设置
-movie-parameters = 影片参数
-custom-base-url = 自定义基础网址
-spoof-swf-url = SWF 网址欺骗
-referer-url = 来源链接(Referer)
+network-settings = Network Settings
+player-settings = Player Settings
+movie-parameters = Movie Parameters
+custom-base-url = Custom Base URL
+spoof-swf-url = Spoof SWF URL
+referer-url = Referer URL
 cookie = Cookie
-proxy = 代理
-upgrade-http = 升级 HTTP 到 HTTPS
-tcp-connections = TCP 连接
-tcp-connections-allow = 允许
-tcp-connections-ask = 询问
-tcp-connections-deny = 拒绝
-open-url-mode = 打开链接
-open-url-mode-allow = 允许
-open-url-mode-confirm = 询问
-open-url-mode-deny = 拒绝
-load-behavior = 加载方式
-load-behavior-streaming = 流
-load-behavior-delayed = 延迟
-load-behavior-blocking = 阻止
-max-execution-duration = 最大执行时长
-max-execution-duration-suffix = { " " } 秒
-quality = 质量
-quality-low = 低
-quality-medium = 中
-quality-high = 高
-quality-best = 最佳
-quality-high8x8 = 高 (8x8)
-quality-high8x8linear = 高 (8x8) 线性
-quality-high16x16 = 高 (16x16)
-quality-high16x16linear = 高 (16x16) 线性
-letterbox = 宽屏填充黑边
-letterbox-on = 开
-letterbox-fullscreen = 仅全屏
-letterbox-off = 关
-align = 舞台对齐
-align-center = 居中
-align-left = 靠左
-align-right = 靠右
-align-top = 顶部
-align-bottom = 底部
-align-top-left = 左上
-align-bottom-left = 左下
-align-top-right = 右上
-align-bottom-right = 右下
-align-force = 强制
-scale-mode = 缩放模式
-scale-mode-noscale = 无缩放 (100%)
+proxy = Proxy
+upgrade-http = Upgrade HTTP to HTTPS
+tcp-connections = TCP Connections
+tcp-connections-allow = Allow
+tcp-connections-ask = Ask
+tcp-connections-deny = Deny
+open-url-mode = Open Links
+open-url-mode-allow = Allow
+open-url-mode-confirm = Ask
+open-url-mode-deny = Deny
+load-behavior = Load Behavior
+load-behavior-streaming = Streaming
+load-behavior-delayed = Delayed
+load-behavior-blocking = Blocking
+max-execution-duration = Max Execution Duration
+max-execution-duration-suffix = { " " } secs
+quality = Quality
+quality-low = Low
+quality-medium = Medium
+quality-high = High
+quality-best = Best
+quality-high8x8 = High (8x8)
+quality-high8x8linear = High (8x8) Linear
+quality-high16x16 = High (16x16)
+quality-high16x16linear = High (16x16) Linear
+letterbox = Letterbox
+letterbox-on = On
+letterbox-fullscreen = Fullscreen Only
+letterbox-off = Off
+align = Stage Alignment
+align-center = Center
+align-left = Left
+align-right = Right
+align-top = Top
+align-bottom = Bottom
+align-top-left = Top-Left
+align-bottom-left = Bottom-Left
+align-top-right = Top-Right
+align-bottom-right = Bottom-Right
+align-force = Force
+scale-mode = Scale Mode
+scale-mode-noscale = Unscaled (100%)
 scale-mode-noscale-tooltip =
-    显示影片的原始大小，没有任何缩放。
+    Displays the movie at its original size, without any zoom.
     
-    对应于 StageScaleMode.NO_SCALE
-scale-mode-showall = 缩放以适应
+    Corresponds to StageScaleMode.NO_SCALE
+scale-mode-showall = Zoom to Fit
 scale-mode-showall-tooltip =
-    将影片放大以尽可能填满窗口，同时不进行裁剪，保持长宽比。
+    Zooms the movie to fill the window as much as possible without cropping, maintaining aspect ratio.
     
-    对应 StageScaleMode.SHOW_ALL
-scale-mode-exactfit = 拉伸以适应
+    Corresponds to StageScaleMode.SHOW_ALL
+scale-mode-exactfit = Stretch to Fit
 scale-mode-exactfit-tooltip =
-    确保影片填满整个窗口，忽略长宽比。
+    Ensures the movie fills the entire window, disregarding aspect ratio.
     
-    对应 StageScaleMode.EXACT_FIT
-scale-mode-noborder = 裁剪以适应
+    Corresponds to StageScaleMode.EXACT_FIT
+scale-mode-noborder = Crop to Fit
 scale-mode-noborder-tooltip =
-    填满整个窗口，同时保持长宽比，必要时裁剪画面。
+    Fills the entire window while maintaining aspect ratio, cropping the movie if necessary.
     
-    对应 StageScaleMode.NO_BORDER
-scale-mode-force = 强制
-scale-mode-force-tooltip = 防止影片改变缩放模式，将其锁定为所选设置。
-player-version = 播放器版本
-player-runtime = 运行时系统
+    Corresponds to StageScaleMode.NO_BORDER
+scale-mode-force = Force
+scale-mode-force-tooltip = Prevents the movie from changing the scale mode, locking it to the selected setting.
+player-version = Player Version
+player-runtime = Player Runtime
 player-runtime-flash = Flash Player
 player-runtime-air = Adobe AIR
-custom-framerate = 自定义帧率
+custom-framerate = Custom Framerate
 custom-framerate-suffix = { " " } fps
-dummy-external-interface = 虚拟外部接口
+dummy-external-interface = Dummy External Interface

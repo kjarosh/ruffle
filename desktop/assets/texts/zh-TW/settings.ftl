@@ -1,60 +1,77 @@
-network-settings = 網路設定
-player-settings = 播放器設定
-movie-parameters = 參數
-custom-base-url = 自訂的基本 URL
-spoof-swf-url = 欺騙 URL
-referer-url = 參照位址
+network-settings = Network Settings
+player-settings = Player Settings
+movie-parameters = Movie Parameters
+custom-base-url = Custom Base URL
+spoof-swf-url = Spoof SWF URL
+referer-url = Referer URL
 cookie = Cookie
-proxy = 代理伺服器
-upgrade-http = 升級HTTP至HTTPS
-tcp-connections = TCP 連接
-tcp-connections-allow = 允許
-tcp-connections-ask = 詢問
-tcp-connections-deny = 拒絕
-open-url-mode = 打開連結
-open-url-mode-allow = 允許
-open-url-mode-confirm = 詢問
-open-url-mode-deny = 拒絕
-load-behavior = 載入行為
-load-behavior-streaming = 串流
-load-behavior-delayed = 延遲
-load-behavior-blocking = 阻止
-max-execution-duration = 最大執行次數
-max-execution-duration-suffix = { " " } 秒
-quality = 品質
-quality-low = 低
-quality-medium = 中
-quality-high = 高
-quality-best = 最佳
-quality-high8x8 = 高 (8x8)
-quality-high8x8linear = 高 (8x8) 線性
-quality-high16x16 = 高 (16x16)
-quality-high16x16linear = 高 (16x16) 線性
-letterbox = 信箱模式
-letterbox-on = 開啟
-letterbox-fullscreen = 全螢幕專用
-letterbox-off = 關閉
-align = 背景設置
-align-center = 置中
-align-left = 左側
-align-right = 右側
-align-top = 頂部
-align-bottom = 底部
-align-top-left = 左上角
-align-bottom-left = 左下方
-align-top-right = 右上角
-align-bottom-right = 右下方
-align-force = 強制
-scale-mode = 縮放模式
-scale-mode-noscale = 未縮放 (100%)
-scale-mode-showall = 縮放至適當比例
-scale-mode-exactfit = 伸長到適合
-scale-mode-noborder = 裁剪以適應寬高比
-scale-mode-force = 強制
-player-version = 播放器版本
-player-runtime = 執行環境
+proxy = Proxy
+upgrade-http = Upgrade HTTP to HTTPS
+tcp-connections = TCP Connections
+tcp-connections-allow = Allow
+tcp-connections-ask = Ask
+tcp-connections-deny = Deny
+open-url-mode = Open Links
+open-url-mode-allow = Allow
+open-url-mode-confirm = Ask
+open-url-mode-deny = Deny
+load-behavior = Load Behavior
+load-behavior-streaming = Streaming
+load-behavior-delayed = Delayed
+load-behavior-blocking = Blocking
+max-execution-duration = Max Execution Duration
+max-execution-duration-suffix = { " " } secs
+quality = Quality
+quality-low = Low
+quality-medium = Medium
+quality-high = High
+quality-best = Best
+quality-high8x8 = High (8x8)
+quality-high8x8linear = High (8x8) Linear
+quality-high16x16 = High (16x16)
+quality-high16x16linear = High (16x16) Linear
+letterbox = Letterbox
+letterbox-on = On
+letterbox-fullscreen = Fullscreen Only
+letterbox-off = Off
+align = Stage Alignment
+align-center = Center
+align-left = Left
+align-right = Right
+align-top = Top
+align-bottom = Bottom
+align-top-left = Top-Left
+align-bottom-left = Bottom-Left
+align-top-right = Top-Right
+align-bottom-right = Bottom-Right
+align-force = Force
+scale-mode = Scale Mode
+scale-mode-noscale = Unscaled (100%)
+scale-mode-noscale-tooltip =
+    Displays the movie at its original size, without any zoom.
+    
+    Corresponds to StageScaleMode.NO_SCALE
+scale-mode-showall = Zoom to Fit
+scale-mode-showall-tooltip =
+    Zooms the movie to fill the window as much as possible without cropping, maintaining aspect ratio.
+    
+    Corresponds to StageScaleMode.SHOW_ALL
+scale-mode-exactfit = Stretch to Fit
+scale-mode-exactfit-tooltip =
+    Ensures the movie fills the entire window, disregarding aspect ratio.
+    
+    Corresponds to StageScaleMode.EXACT_FIT
+scale-mode-noborder = Crop to Fit
+scale-mode-noborder-tooltip =
+    Fills the entire window while maintaining aspect ratio, cropping the movie if necessary.
+    
+    Corresponds to StageScaleMode.NO_BORDER
+scale-mode-force = Force
+scale-mode-force-tooltip = Prevents the movie from changing the scale mode, locking it to the selected setting.
+player-version = Player Version
+player-runtime = Player Runtime
 player-runtime-flash = Flash Player
 player-runtime-air = Adobe AIR
-custom-framerate = 客製化偵數
+custom-framerate = Custom Framerate
 custom-framerate-suffix = { " " } fps
-dummy-external-interface = 虛設外部接口
+dummy-external-interface = Dummy External Interface

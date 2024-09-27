@@ -2,6 +2,8 @@
 Type=Application
 Name=Ruffle
 GenericName=Flash Player
+Comment[pl]=Graj w gry Flash
+Comment[zh]=xxxx
 Comment=Play Flash games & movies
 Icon=rs.ruffle.Ruffle
 Exec=ruffle %u

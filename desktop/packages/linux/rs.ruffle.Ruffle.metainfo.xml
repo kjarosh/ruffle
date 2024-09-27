@@ -5,6 +5,7 @@
     <project_license>MIT OR Apache-2.0</project_license>
     <name>Ruffle</name>
     <summary>Play Flash games &amp; movies</summary>
+    <summary xml:lang="pl">Graj w gry Flash</summary>
     <developer id="rs.ruffle">
         <name>The Ruffle Team</name>
     </developer>

@@ -1,77 +1,77 @@
-network-settings = Ustawienia sieci
-player-settings = Ustawienia odtwarzacza
-movie-parameters = Parametry filmu
-custom-base-url = Własny bazowy adres URL
-spoof-swf-url = Fałszywy adres SWF
-referer-url = Adres odsyłający
+network-settings = Network Settings
+player-settings = Player Settings
+movie-parameters = Movie Parameters
+custom-base-url = Custom Base URL
+spoof-swf-url = Spoof SWF URL
+referer-url = Referer URL
 cookie = Cookie
-proxy = Serwer Proxy
-upgrade-http = Przełącz HTTP na HTTPS
-tcp-connections = Połączenia TCP
-tcp-connections-allow = Zezwól
-tcp-connections-ask = Pytaj
-tcp-connections-deny = Odmów
-open-url-mode = Otwórz linki
-open-url-mode-allow = Zezwól
-open-url-mode-confirm = Pytaj
-open-url-mode-deny = Odmów
-load-behavior = Sposób ładowania
-load-behavior-streaming = Strumieniowanie
-load-behavior-delayed = Opóźnione
-load-behavior-blocking = Blokowanie
-max-execution-duration = Maksymalny czas wykonywania
-max-execution-duration-suffix = { " " } sek.
-quality = Jakość
-quality-low = Niska
-quality-medium = Średnia
-quality-high = Wysoka
-quality-best = Najlepsza
-quality-high8x8 = Wysoka (8x8)
-quality-high8x8linear = Wysoki (8x8) liniowy
-quality-high16x16 = Wysoka (16x16)
-quality-high16x16linear = Wysoki (16x16) liniowy
+proxy = Proxy
+upgrade-http = Upgrade HTTP to HTTPS
+tcp-connections = TCP Connections
+tcp-connections-allow = Allow
+tcp-connections-ask = Ask
+tcp-connections-deny = Deny
+open-url-mode = Open Links
+open-url-mode-allow = Allow
+open-url-mode-confirm = Ask
+open-url-mode-deny = Deny
+load-behavior = Load Behavior
+load-behavior-streaming = Streaming
+load-behavior-delayed = Delayed
+load-behavior-blocking = Blocking
+max-execution-duration = Max Execution Duration
+max-execution-duration-suffix = { " " } secs
+quality = Quality
+quality-low = Low
+quality-medium = Medium
+quality-high = High
+quality-best = Best
+quality-high8x8 = High (8x8)
+quality-high8x8linear = High (8x8) Linear
+quality-high16x16 = High (16x16)
+quality-high16x16linear = High (16x16) Linear
 letterbox = Letterbox
-letterbox-on = Włącz
-letterbox-fullscreen = Tylko na pełnym ekranie
-letterbox-off = Wyłącz
-align = Wyrównanie sceny
-align-center = Wyśrodkuj
-align-left = Do lewej
-align-right = Do prawej
-align-top = Do góry
-align-bottom = Do dołu
-align-top-left = Lewy-górny
-align-bottom-left = Lewy dolny
-align-top-right = Górny prawy
-align-bottom-right = Prawy-dół
-align-force = Wymuś
-scale-mode = Tryb skalowania
-scale-mode-noscale = Brak skali (100%)
+letterbox-on = On
+letterbox-fullscreen = Fullscreen Only
+letterbox-off = Off
+align = Stage Alignment
+align-center = Center
+align-left = Left
+align-right = Right
+align-top = Top
+align-bottom = Bottom
+align-top-left = Top-Left
+align-bottom-left = Bottom-Left
+align-top-right = Top-Right
+align-bottom-right = Bottom-Right
+align-force = Force
+scale-mode = Scale Mode
+scale-mode-noscale = Unscaled (100%)
 scale-mode-noscale-tooltip =
-    Wyświetla film w oryginalnym rozmiarze, bez powiększenia.
+    Displays the movie at its original size, without any zoom.
     
-    Odpowiednik StageScaleMode.NO_SCALE
-scale-mode-showall = Dopasuj do rozmiaru
+    Corresponds to StageScaleMode.NO_SCALE
+scale-mode-showall = Zoom to Fit
 scale-mode-showall-tooltip =
-    Skaluje film, aby maksymalnie wypełnić okno bez przycinania, zachowując proporcje.
+    Zooms the movie to fill the window as much as possible without cropping, maintaining aspect ratio.
     
-    Odpowiednik StageScaleMode.SHOW_ALL
-scale-mode-exactfit = Rozciągnij
+    Corresponds to StageScaleMode.SHOW_ALL
+scale-mode-exactfit = Stretch to Fit
 scale-mode-exactfit-tooltip =
-    Sprawia, że film wypełnia całe okno, bez względu na proporcje.
+    Ensures the movie fills the entire window, disregarding aspect ratio.
     
-    Odpowiednik StageScaleMode.EXACT_FIT
-scale-mode-noborder = Przytnij, aby dopasować
+    Corresponds to StageScaleMode.EXACT_FIT
+scale-mode-noborder = Crop to Fit
 scale-mode-noborder-tooltip =
-    Wypełnia całe okno, zachowując proporcje oraz przycinając film w razie potrzeby.
+    Fills the entire window while maintaining aspect ratio, cropping the movie if necessary.
     
-    Odpowiednik StageScaleMode.NO_BORDER
-scale-mode-force = Wymuś
-scale-mode-force-tooltip = Zapobiega zmianie trybu skalowania przez film, blokując go do wybranego ustawienia.
-player-version = Wersja odtwarzacza
-player-runtime = Środowisko wykonawcze
+    Corresponds to StageScaleMode.NO_BORDER
+scale-mode-force = Force
+scale-mode-force-tooltip = Prevents the movie from changing the scale mode, locking it to the selected setting.
+player-version = Player Version
+player-runtime = Player Runtime
 player-runtime-flash = Flash Player
 player-runtime-air = Adobe AIR
-custom-framerate = FPS
+custom-framerate = Custom Framerate
 custom-framerate-suffix = { " " } fps
-dummy-external-interface = Fikcyjny interfejs zewnętrzny
+dummy-external-interface = Dummy External Interface
