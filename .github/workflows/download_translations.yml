@@ -1,14 +1,14 @@
 name: Download translations from Crowdin
 
 on:
-  schedule:
-    - cron: '0 21 * * *'
+  push:
+    branches: [ metainfo-i18n ]
 
 jobs:
   crowdin:
     runs-on: ubuntu-latest
 
-    if: github.repository == 'ruffle-rs/ruffle'
+    if: github.repository == 'kjarosh/ruffle'
 
     strategy:
       max-parallel: 1
@@ -49,6 +49,10 @@ jobs:
       - name: Apply desktop & metainfo sources
         working-directory: desktop/packages/linux
         run: |
+          ls -alh
+          ls -alh locale
+          ls -alh locale/rs.ruffle.Ruffle.desktop
+          ls -alh locale/rs.ruffle.Ruffle.metainfo.xml
           make apply
 
       - name: Commit
@@ -63,7 +67,7 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           branch: l10n_crowdin_translations
-          github_token: ${{ secrets.RUFFLE_BUILD_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           force: true
 
       - name: Create a PR
@@ -81,4 +85,4 @@ jobs:
         env:
           # Use a custom token rather than the automatic GITHUB_TOKEN, as the automatic one doesn't allow created PRs to trigger workflows
           # By using our own token (and thus own user), workflows will run, and the PR will be able to be merged.
-          GITHUB_TOKEN: ${{ secrets.RUFFLE_BUILD_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
