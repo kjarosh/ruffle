@@ -436,7 +436,7 @@ impl<'a, 'gc> LayoutContext<'a, 'gc> {
         self.cursor.set_x(Twips::ZERO);
         self.cursor += (
             Twips::ZERO,
-            self.max_font_size + self.line_leading_adjustment(),
+            self.max_ascent + self.max_descent + self.line_leading_adjustment(),
         )
             .into();
 
@@ -465,7 +465,7 @@ impl<'a, 'gc> LayoutContext<'a, 'gc> {
         self.cursor.set_x(Twips::ZERO);
         self.cursor += (
             Twips::ZERO,
-            self.max_font_size + self.line_leading_adjustment(),
+            self.max_ascent + self.max_descent + self.line_leading_adjustment(),
         )
             .into();
 
