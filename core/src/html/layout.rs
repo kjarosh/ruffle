@@ -75,6 +75,12 @@ pub struct LayoutContext<'a, 'gc> {
     /// The highest ascent observed within the current line.
     max_ascent: Twips,
 
+    /// The highest descent observed within the current line.
+    max_descent: Twips,
+
+    /// The highest leading observed within the current line.
+    max_leading: Twips,
+
     /// The growing list of layout lines to return when layout has finished.
     lines: Vec<LayoutLine<'gc>>,
 
@@ -127,6 +133,8 @@ impl<'a, 'gc> LayoutContext<'a, 'gc> {
             text,
             max_font_size: Default::default(),
             max_ascent: Default::default(),
+            max_descent: Default::default(),
+            max_leading: Default::default(),
             lines: Vec::new(),
             current_line_index: 0,
             boxes: Vec::new(),
@@ -495,13 +503,19 @@ impl<'a, 'gc> LayoutContext<'a, 'gc> {
     fn newspan(&mut self, first_span: &TextSpan) {
         let font_size = Twips::from_pixels(first_span.font.size);
         let ascent = self.font.unwrap().get_baseline_for_height(font_size);
+        let descent = self.font.unwrap().get_descent_for_height(font_size);
+        let leading = self.font.unwrap().get_leading_for_height(font_size);
         if self.is_start_of_line() {
             self.current_line_span = first_span.clone();
             self.max_font_size = font_size;
             self.max_ascent = ascent;
+            self.max_descent = descent;
+            self.max_leading = leading;
         } else {
             self.max_font_size = self.max_font_size.max(font_size);
             self.max_ascent = self.max_ascent.max(ascent);
+            self.max_descent = self.max_descent.max(descent);
+            self.max_leading = self.max_leading.max(leading);
         }
     }
 
