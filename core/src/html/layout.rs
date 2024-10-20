@@ -151,18 +151,20 @@ impl<'a, 'gc> LayoutContext<'a, 'gc> {
     fn font_leading_adjustment(&self) -> Twips {
         // Flash appears to round up the font's leading to the nearest pixel
         // and adds one. I'm not sure why.
-        self.font
-            .map(|f| f.get_leading_for_height(self.max_font_size))
-            .unwrap_or_default()
+        // self.font
+        //     .map(|f| f.get_leading_for_height(self.max_font_size))
+        //     .unwrap_or_default()
+        Twips::ZERO
     }
 
     /// Calculate the line-to-line leading present on this line, including the
     /// font-leading above.
     fn line_leading_adjustment(&self) -> Twips {
-        self.font
-            .map(|f| f.get_leading_for_height(self.max_font_size))
-            .unwrap_or_default()
-            + Twips::from_pixels(self.current_line_span.leading)
+        // self.font
+        //     .map(|f| f.get_leading_for_height(self.max_font_size))
+        //     .unwrap_or_default()
+        //     +
+            Twips::from_pixels(self.current_line_span.leading)
     }
 
     /// Determine the effective alignment mode for the current line of text.
