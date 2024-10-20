@@ -788,12 +788,12 @@ impl<'gc> EditText<'gc> {
         edit_text.hscroll = 0.0;
         edit_text.scroll = 1;
 
-        let layout_exterior_bounds = edit_text.layout.exterior_bounds();
+        let layout_bounds = edit_text.layout.bounds();
 
         if autosize != AutoSizeMode::None {
             if !is_word_wrap {
                 // The edit text's bounds needs to have the padding baked in.
-                let width = layout_exterior_bounds.width() + padding;
+                let width = layout_bounds.width() + padding;
                 let new_x = match autosize {
                     AutoSizeMode::Left => edit_text.bounds.x_min,
                     AutoSizeMode::Center => {
@@ -808,7 +808,7 @@ impl<'gc> EditText<'gc> {
                 let width = edit_text.requested_width;
                 edit_text.bounds.set_width(width);
             }
-            let height = layout_exterior_bounds.height() + padding;
+            let height = layout_bounds.height() + padding;
             edit_text.bounds.set_height(height);
         } else {
             let width = edit_text.requested_width;
@@ -824,7 +824,7 @@ impl<'gc> EditText<'gc> {
     ///
     /// The returned tuple should be interpreted as width, then height.
     pub fn measure_text(self, _context: &mut UpdateContext<'gc>) -> (Twips, Twips) {
-        let exterior_bounds = self.0.read().layout.exterior_bounds();
+        let exterior_bounds = self.0.read().layout.bounds();
         (exterior_bounds.width(), exterior_bounds.height())
     }
 
