@@ -1456,6 +1456,47 @@ impl<'gc> LayoutBox<'gc> {
         }
     }
 
+    /// Find position in text by the x-axis coordinate (relative to this layout box).
+    pub fn find_position_by_x(&self, x: Twips) -> Result<usize, usize> {
+        let LayoutContent::Text {
+            start,
+            end,
+            ref char_end_pos,
+            ..
+        } = self.content
+        else {
+            // If we're not text, the user couldn't have clicked on any text,
+            // and we have only one position to resolve to.
+            return Err(self.start());
+        };
+
+        if x < Twips::ZERO {
+            return Err(start);
+        }
+
+        let char_index = char_end_pos.binary_search(&x).unwrap_or_else(|e| e);
+
+        if char_index >= char_end_pos.len() {
+            return Err(end);
+        }
+
+        let left = if char_index == 0 {
+            Twips::ZERO
+        } else {
+            char_end_pos[char_index - 1]
+        };
+        let right = char_end_pos[char_index];
+
+        let distance_to_left = x - left;
+        let distance_to_right = right - x;
+
+        if distance_to_left <= distance_to_right {
+            Ok(start + char_index)
+        } else {
+            Ok(start + char_index + 1)
+        }
+    }
+
     /// Return x-axis char bounds of the given char relative to this layout box.
     pub fn char_x_bounds(&self, position: usize) -> Option<(Twips, Twips)> {
         let relative_position = position.checked_sub(self.start())?;
