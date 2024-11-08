@@ -1442,8 +1442,6 @@ impl<'gc> EditText<'gc> {
         let position = self.global_to_local(position)?;
         let position = self.local_to_layout(&text, position);
 
-        // TODO We can use binary search for both y and x here
-
         // First determine which line of text is the closest match to the Y position...
         let line_index = text
             .layout
@@ -1451,52 +1449,7 @@ impl<'gc> EditText<'gc> {
             .unwrap_or_else(|i| i);
         let line = text.layout.lines().get(line_index)?;
 
-        // ...then find the box within that line that is the closest match to the X position.
-        let mut closest_layout_box: Option<&LayoutBox<'gc>> = None;
-        for layout_box in line.boxes_iter() {
-            if layout_box.is_text_box() {
-                if position.x >= layout_box.bounds().offset_x() || closest_layout_box.is_none() {
-                    closest_layout_box = Some(layout_box);
-                } else {
-                    break;
-                }
-            }
-        }
-
-        if let Some(layout_box) = closest_layout_box {
-            let origin = layout_box.bounds().origin();
-            let mut matrix = Matrix::translate(origin.x(), origin.y());
-            matrix = matrix.inverse().expect("Invertible layout matrix");
-            let local_position = matrix * position;
-
-            if let Some((text, _tf, font, params, color)) =
-                layout_box.as_renderable_text(text.text_spans.text())
-            {
-                let mut result = 0;
-                let baseline_adjustment =
-                    font.get_baseline_for_height(params.height()) - params.height();
-                font.evaluate(
-                    text,
-                    self.text_transform(color, baseline_adjustment),
-                    params,
-                    |pos, _transform, _glyph: &Glyph, advance, x| {
-                        if local_position.x >= x {
-                            if local_position.x > x + (advance / 2) {
-                                result = string_utils::next_char_boundary(text, pos);
-                            } else {
-                                result = pos;
-                            }
-                        }
-                    },
-                );
-                if let LayoutContent::Text { start, .. } = layout_box.content() {
-                    return Some(result + start);
-                }
-            }
-        }
-
-        // Should only be reached if there are no text layout boxes at all.
-        None
+        Some(line.find_position_by_x(position.x).unwrap_or_else(|e| e))
     }
 
     /// The number of characters that currently can be inserted, considering `TextField.maxChars`
