@@ -1104,6 +1104,61 @@ impl<'gc> LayoutLine<'gc> {
         result.ok()
     }
 
+    pub fn find_position_by_x(&self, x: Twips) -> Result<usize, usize> {
+        let box_index = self.boxes.binary_search_by(|probe| {
+            if probe.bounds.extent_x() <= x {
+                Ordering::Less
+            } else if x < probe.bounds.offset_x() {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        });
+
+        let box_index = match box_index {
+            Ok(box_index) => {
+                // We're over a box, let's just delegate the lookup there.
+                let layout_box = &self.boxes[box_index];
+                let position = x - layout_box.bounds().offset_x();
+                return layout_box.find_position_by_x(position);
+            }
+            Err(box_index) => box_index,
+        };
+
+        if box_index == 0 {
+            // We're before the first box.
+            return Err(self.start);
+        }
+
+        if box_index >= self.boxes.len() {
+            // We're after the last box.
+            let position = self
+                .boxes
+                .last()
+                .map(|b| b.end())
+                .unwrap_or_else(|| self.end());
+            return Err(position);
+        }
+
+        // We're between boxes: justified text.
+        let left_box = &self.boxes[box_index - 1];
+        let right_box = &self.boxes[box_index];
+        let left = left_box.bounds().extent_x();
+        let right = right_box.bounds().offset_x();
+
+        let distance_to_left = x - left;
+        let distance_to_right = right - x;
+
+        if distance_to_left <= distance_to_right {
+            // When we're between two layout boxes, we have to
+            // skip the space character as the space between
+            // boxes is treated as such.
+            Ok(left_box.end() - 1)
+        } else {
+            Ok(right_box.start())
+        }
+    }
+
     /// Returns x-axis char bounds of the given char relative to the whole layout.
     pub fn char_x_bounds(&self, position: usize) -> Option<(Twips, Twips)> {
         let box_index = self.find_box_index_by_position(position)?;
