@@ -3,6 +3,7 @@ num_frames = 1
 [image_comparisons.output]
 tolerance = 20
 max_outliers = 72
+max_outliers_arm = 1195
 
 [player_options]
 with_renderer = { optional = false, sample_count = 1 }

@@ -12,6 +12,7 @@ use ruffle_render::backend::RenderBackend;
 use ruffle_render::quality::StageQuality;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::time::Duration;
 use vfs::VfsPath;
 
@@ -241,6 +242,7 @@ impl PlayerOptions {
 pub struct ImageComparison {
     tolerance: u8,
     max_outliers: usize,
+    max_outliers_arm: usize,
     pub trigger: ImageTrigger,
 }
 
@@ -323,7 +325,12 @@ impl ImageComparison {
             .max()
             .unwrap();
 
-        if outliers > self.max_outliers {
+        let mut max_outliers = self.max_outliers;
+        if env::var("ARM_SPECIFIC").is_ok() && self.max_outliers_arm != 0 {
+            max_outliers = self.max_outliers_arm
+        }
+
+        if outliers > max_outliers {
             save_actual_image()?;
 
             let mut difference_color = Vec::with_capacity(
@@ -377,7 +384,7 @@ impl ImageComparison {
                 "Image '{}' failed: Number of outliers ({}) is bigger than allowed limit of {}. Max difference is {}",
                 name,
                 outliers,
-                self.max_outliers,
+                max_outliers,
                 max_difference
             ));
         } else {

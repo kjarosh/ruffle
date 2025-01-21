@@ -48,6 +48,7 @@ runtime = "AIR" # The runtime to emulate ("FlashPlayer" or "AIR"). Defaults to "
 [image_comparisons.COMPARISON_NAME] # COMPARISON_NAME is a name of this particular image
 tolerance = 0 # The tolerance per pixel channel to be considered "the same". Increase as needed with tests that aren't pixel perfect across platforms.
 max_outliers = 0 # Maximum number of outliers allowed over the given tolerance levels. Increase as needed with tests that aren't pixel perfect across platforms.
+max_outliers_arm = 0 # ARM max_outliers value.
 trigger = "last_frame" # When to trigger this capture. Options are last_frame (default), fs_command, or a frame/tick number (1-based). Only one image may exist per frame/tick number or last_frame.
 
 # Which build features are required for this test to run.
