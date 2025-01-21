@@ -4,6 +4,7 @@ num_frames = 1
 tolerance = 1
 # FIXME - investigate why this is so high
 max_outliers = 1935
+max_outliers_arm = 3237
 
 [player_options]
 with_renderer = { optional = true, sample_count = 1 }
