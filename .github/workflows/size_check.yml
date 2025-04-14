@@ -2,7 +2,7 @@ name: Check Size
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master-sync]
 
 jobs:
   check-size:
