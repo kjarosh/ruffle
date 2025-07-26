@@ -764,3 +764,43 @@ jobs:
           commit_email: ruffle@ruffle.rs
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: Update to Nightly ${{ steps.current_time_dashes.outputs.formattedTime }}
+
+  coverage-report:
+    name: Coverage Report
+    needs: create-nightly-release
+    if: needs.create-nightly-release.outputs.is_active == 'true'
+    runs-on: ubuntu-24.04
+    env:
+      TARPAULIN_OUTPUT: tarpaulin-report.html
+    steps:
+      - name: Clone Ruffle repo
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+
+      - name: Install tarpaulin
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: cargo-tarpaulin
+          version: '^0.32'
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install -y libasound2-dev libudev-dev
+
+      - name: Run tarpaulin
+        env:
+          TARPAULIN_OPTS: --features lzma,jpegxr,imgtests --out Html -t 2000 --workspace --locked -j 4 --no-fail-fast
+        run: |
+          cargo tarpaulin ${{ env.TARPAULIN_OPTS }}
+
+      - name: Upload report
+        if: runner.os != 'macOS'
+        run: gh release upload "${{ needs.create-nightly-release.outputs.tag_name }}" "${{ env.TARPAULIN_OUTPUT }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
