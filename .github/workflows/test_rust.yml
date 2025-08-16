@@ -13,7 +13,7 @@ concurrency:
 env:
   FEATURES: lzma,jpegxr
   TEST_OPTS: --workspace --locked --no-fail-fast -j 4
-  LLVM_COV_OPTS: --branch --profile ci ${TEST_OPTS} --features ${FEATURES}
+  LLVM_COV_OPTS: --branch --profile ci ${TEST_OPTS} --features ${FEATURES},imgtests
 
   LINUX_DEPENDENCIES: libasound2-dev mesa-vulkan-drivers libudev-dev
 
