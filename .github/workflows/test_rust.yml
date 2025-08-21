@@ -13,7 +13,7 @@ concurrency:
 env:
   FEATURES: lzma,jpegxr
   TEST_OPTS: --workspace --locked --no-fail-fast -j 4
-  LLVM_COV_OPTS: --branch --profile ci ${TEST_OPTS} --features ${FEATURES},imgtests
+  LLVM_COV_OPTS: --branch --profile ci
 
   LINUX_DEPENDENCIES: libasound2-dev mesa-vulkan-drivers libudev-dev
 
@@ -190,7 +190,11 @@ jobs:
 
       - name: Run llvm-cov for SWF tests
         working-directory: tests
-        run: cargo llvm-cov --html ${{ env.LLVM_COV_OPTS }}
+        env:
+          LLVM_COV_FEATURES: ${{ env.FEATURES }},imgtests
+        run: |
+          cargo llvm-cov --html ${{ env.LLVM_COV_OPTS }} ${{ env.TEST_OPTS }} --features ${LLVM_COV_FEATURES}
+          cargo llvm-cov report --lcov ${{ env.LLVM_COV_OPTS }}
 
       - name: Upload report
         if: always()
