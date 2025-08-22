@@ -228,6 +228,10 @@ impl<'gc> ClassObject<'gc> {
 
         let class_classobject = activation.avm2().classes().class;
 
+        if i_class.class_object().is_some() {
+            println!("X");
+        }
+
         // class vtable == class traits + Class instance traits
         let class_vtable = VTable::new(
             c_class,

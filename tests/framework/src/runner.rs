@@ -74,6 +74,10 @@ impl TestRunner {
             frame_time = tr;
         }
 
+        if frame_time == 8.0 {
+            println!("X");
+        }
+
         let frame_time_duration = Duration::from_millis(frame_time as u64);
 
         let log = TestLogBackend::default();
