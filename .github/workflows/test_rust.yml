@@ -202,6 +202,33 @@ jobs:
           cargo llvm-cov report --json --output-path target/llvm-cov/coverage.json ${{ env.LLVM_COV_OPTS }}
           cargo llvm-cov report --json --output-path target/llvm-cov/coverage-summary.json --summary-only ${{ env.LLVM_COV_OPTS }}
 
+      - name: Calculate base ref
+        id: base_ref
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] || [ "${{ github.event_name }}" = "pull_request_target" ]; then
+            echo "value=${{ github.base_ref }}" | tee -a $GITHUB_ENV
+          else
+            # For push events, base_ref = previous commit SHA
+            echo "value=${{ github.event.before }}" | tee -a $GITHUB_ENV
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install diff-cover
+        run: pip install diff-cover
+
+      - name: Run diff-cover
+        run: >
+          diff-cover target/llvm-cov/coverage.lcov
+            --html-report report.html
+            --json-report report.json
+            --markdown-report report.md
+            --compare-branch ${{ steps.base_ref.outputs.value }}
+
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
