@@ -255,6 +255,10 @@ jobs:
           name: diff-cover
           path: target/diff-cover
 
+      - name: Upload diff-cover summary
+        if: always()
+        run: cat target/diff-cover/report.md >> $GITHUB_STEP_SUMMARY
+
   dependencies:
     needs: changes
     if: needs.changes.outputs.should_run == 'true'
