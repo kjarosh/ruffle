@@ -182,16 +182,15 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ] || [ "${{ github.event_name }}" = "pull_request_target" ]; then
             # For PRs always compute delta with base ref
-            echo "Within a PR"
+            echo "::notice title=Delta Coverage Base::Using the PR base as base ref for delta coverage."
             echo "value=${{ github.base_ref }}" | tee -a $GITHUB_OUTPUT
           elif git merge-base --is-ancestor ${{ github.event.before }} HEAD; then
             # Use the before SHA if it's an ancestor of HEAD
-            echo "Using 'before' SHA"
+            echo "::notice title=Delta Coverage Base::Using the last pushed commit as base ref for delta coverage."
             echo "value=${{ github.event.before }}" | tee -a $GITHUB_OUTPUT
           else
             # If not, someone force pushed and just use the parent
-            echo "Using parent SHA"
-            echo "::warning title=Unknown Delta Coverage Base::Failed to compute the base for delta coverage. Using parent commit."
+            echo "::warning title=Unknown Delta Coverage Base::Failed to compute the base ref for delta coverage. Using parent commit."
             parent=$(git rev-parse HEAD~1)
             echo "value=${parent}" | tee -a $GITHUB_OUTPUT
           fi
@@ -233,20 +232,28 @@ jobs:
           cargo llvm-cov report --json --output-path target/llvm-cov/coverage.json ${{ env.LLVM_COV_OPTS }}
           cargo llvm-cov report --json --output-path target/llvm-cov/coverage-summary.json --summary-only ${{ env.LLVM_COV_OPTS }}
 
-      - name: Run diff-cover
-        run: |
-          diff-cover target/llvm-cov/coverage.lcov \
-            --html-report report.html \
-            --json-report report.json \
-            --markdown-report report.md \
-            --compare-branch ${{ steps.base_ref.outputs.value }}
-
-      - name: Upload report
+      - name: Upload llvm-cov reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: llvm-cov
           path: target/llvm-cov
+
+      - name: Run diff-cover
+        run: |
+          mkdir -p target/diff-cover
+          diff-cover target/llvm-cov/coverage.lcov \
+            --html-report target/diff-cover/report.html \
+            --json-report target/diff-cover/report.json \
+            --markdown-report target/diff-cover/report.md \
+            --compare-branch ${{ steps.base_ref.outputs.value }}
+
+      - name: Upload diff-cover reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diff-cover
+          path: target/diff-cover
 
   dependencies:
     needs: changes
