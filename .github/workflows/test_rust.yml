@@ -182,15 +182,15 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ] || [ "${{ github.event_name }}" = "pull_request_target" ]; then
             # For PRs always compute delta with base ref
-            echo "::notice title=Delta Coverage Base::Using the PR base as base ref for delta coverage."
+            echo "::notice::Using the PR base as base ref for delta coverage."
             echo "value=${{ github.base_ref }}" | tee -a $GITHUB_OUTPUT
           elif git merge-base --is-ancestor ${{ github.event.before }} HEAD; then
             # Use the before SHA if it's an ancestor of HEAD
-            echo "::notice title=Delta Coverage Base::Using the last pushed commit as base ref for delta coverage."
+            echo "::notice::Using the last pushed commit as base ref for delta coverage."
             echo "value=${{ github.event.before }}" | tee -a $GITHUB_OUTPUT
           else
             # If not, someone force pushed and just use the parent
-            echo "::warning title=Unknown Delta Coverage Base::Failed to compute the base ref for delta coverage. Using parent commit."
+            echo "::warning::Failed to compute the base ref for delta coverage. Using parent commit."
             parent=$(git rev-parse HEAD~1)
             echo "value=${parent}" | tee -a $GITHUB_OUTPUT
           fi
