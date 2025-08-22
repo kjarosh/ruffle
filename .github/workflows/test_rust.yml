@@ -164,6 +164,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
+        with:
+          # We need history for delta coverage, but we also don't want to fetch
+          # the whole repo. 42 commits seem reasonable
+          fetch-depth: 42
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -221,11 +225,11 @@ jobs:
           cargo llvm-cov report --json --output-path target/llvm-cov/coverage-summary.json --summary-only ${{ env.LLVM_COV_OPTS }}
 
       - name: Run diff-cover
-        run: >
-          diff-cover target/llvm-cov/coverage.lcov
-            --html-report report.html
-            --json-report report.json
-            --markdown-report report.md
+        run: |
+          diff-cover target/llvm-cov/coverage.lcov \
+            --html-report report.html \
+            --json-report report.json \
+            --markdown-report report.md \
             --compare-branch ${{ steps.base_ref.outputs.value }}
 
       - name: Upload report
