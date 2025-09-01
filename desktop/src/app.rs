@@ -227,6 +227,7 @@ impl MainWindow {
                     }
                 };
                 self.check_redraw();
+                self.check_redraw();
             }
             WindowEvent::Ime(ime) => match ime {
                 Ime::Enabled => {}

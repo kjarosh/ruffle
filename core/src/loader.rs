@@ -2024,7 +2024,7 @@ impl<'gc> Loader<'gc> {
                 ..
             }) => (*target_clip, *vm_data, *from_bytes),
             None => return Err(Error::Cancelled),
-            _ => unreachable!(),
+            _ => return Err(Error::Cancelled),
         };
 
         let mut activation = Avm2Activation::from_nothing(uc);
