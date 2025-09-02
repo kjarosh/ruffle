@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
+    branches: [master2]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -32,6 +32,8 @@ env:
 
   # (Linux) Just to silence warnings about it missing
   XDG_RUNTIME_DIR: ''
+
+  COVERAGE_SCRIPT: ./.github/scripts/coverage.py
 
 jobs:
   changes:
@@ -258,6 +260,14 @@ jobs:
       - name: Upload diff-cover summary
         if: always()
         run: cat target/diff-cover/report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          $COVERAGE_SCRIPT comment_report "${{ github.event.pull_request.number }}" "${RUN_URL}"
 
   dependencies:
     needs: changes
