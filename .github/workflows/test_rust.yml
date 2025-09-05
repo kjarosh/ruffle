@@ -226,40 +226,88 @@ jobs:
         working-directory: tests
         env:
           RUFFLE_TEST_OPTS: --ignore-known-failures
+          LLVM_COV_EXCLUDE: >
+            --exclude ruffle_desktop
+            --exclude exporter
+            --exclude ruffle_scanner
+            --exclude ruffle_frontend_utils
+            --exclude ruffle_render_canvas
+            --exclude ruffle_web
+            --exclude ruffle_web_common
+            --exclude ruffle_web_safari
+            --exclude build_playerglobal
+        run: cargo llvm-cov --no-report ${{ env.LLVM_COV_TEST_OPTS }} ${LLVM_COV_EXCLUDE}
+
+      - name: Generate llvm-cov reports for SWF tests
+        run: |
+          mkdir -p target/llvm-cov-swf
+          cargo llvm-cov report --html --output-dir  target/llvm-cov-swf/ ${{ env.LLVM_COV_OPTS }}
+          cargo llvm-cov report --lcov --output-path target/llvm-cov-swf/coverage.lcov ${{ env.LLVM_COV_OPTS }}
+
+      - name: Run llvm-cov for rest of the tests
+        env:
+          LLVM_COV_EXCLUDE: >
+            --exclude-from-test tests
         run: cargo llvm-cov --no-report ${{ env.LLVM_COV_TEST_OPTS }}
 
-      - name: Generate llvm-cov reports
+      - name: Generate full llvm-cov reports
         run: |
-          mkdir -p target/llvm-cov
-          cargo llvm-cov report --html --output-dir  target/llvm-cov/ ${{ env.LLVM_COV_OPTS }}
-          cargo llvm-cov report --lcov --output-path target/llvm-cov/coverage.lcov ${{ env.LLVM_COV_OPTS }}
+          mkdir -p target/llvm-cov-full
+          cargo llvm-cov report --html --output-dir  target/llvm-cov-full/ ${{ env.LLVM_COV_OPTS }}
+          cargo llvm-cov report --lcov --output-path target/llvm-cov-full/coverage.lcov ${{ env.LLVM_COV_OPTS }}
 
-      - name: Upload llvm-cov reports
+      - name: Upload llvm-cov-swf
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: llvm-cov
-          path: target/llvm-cov
+          name: llvm-cov-swf
+          path: target/llvm-cov-swf
 
-      - name: Run diff-cover
+      - name: Upload llvm-cov-full
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llvm-cov-full
+          path: target/llvm-cov-full
+
+      - name: Run diff-cover for SWF tests
         run: |
-          mkdir -p target/diff-cover
-          diff-cover target/llvm-cov/coverage.lcov \
-            --html-report target/diff-cover/report.html \
-            --json-report target/diff-cover/report.json \
-            --markdown-report target/diff-cover/report.md \
+          mkdir -p target/diff-cover-swf
+          diff-cover target/llvm-cov-swf/coverage.lcov \
+            --html-report target/diff-cover-swf/report.html \
+            --json-report target/diff-cover-swf/report.json \
+            --markdown-report target/diff-cover-swf/report.md \
             --compare-branch ${{ steps.base_ref.outputs.value }}
 
-      - name: Upload diff-cover reports
+      - name: Run diff-cover for all tests
+        run: |
+          mkdir -p target/diff-cover-full
+          diff-cover target/llvm-cov-full/coverage.lcov \
+            --html-report target/diff-cover-full/report.html \
+            --json-report target/diff-cover-full/report.json \
+            --markdown-report target/diff-cover-full/report.md \
+            --compare-branch ${{ steps.base_ref.outputs.value }}
+
+      - name: Upload diff-cover-swf
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: diff-cover
-          path: target/diff-cover
+          name: diff-cover-swf
+          path: target/diff-cover-swf
+
+      - name: Upload diff-cover-full
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diff-cover-full
+          path: target/diff-cover-full
 
       - name: Upload diff-cover summary
         if: always()
-        run: cat target/diff-cover/report.md >> $GITHUB_STEP_SUMMARY
+        run: |
+          cat target/diff-cover-swf/report.md >> $GITHUB_STEP_SUMMARY
+          echo "\n-----\n" >> $GITHUB_STEP_SUMMARY
+          cat target/diff-cover-full/report.md >> $GITHUB_STEP_SUMMARY
 
       - name: Comment
         if: always()
