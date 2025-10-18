@@ -513,6 +513,7 @@ pub trait TInteractiveObject<'gc>:
                     true,
                     MouseButton::Left,
                 );
+                tracing::error!("TEST_DEBUGGING dispatch, got event");
 
                 Avm2::dispatch_event(activation.context, avm2_event, target).into()
             }

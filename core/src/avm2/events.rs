@@ -365,6 +365,10 @@ fn dispatch_event_to_target<'gc>(
     event: EventObject<'gc>,
     simulate_dispatch: bool,
 ) -> Result<(), Error<'gc>> {
+    if event.event().event_type().as_wstr() == b"mouseWheel" {
+        tracing::error!("TEST_DEBUGGING dispatch, to: {current_target:?}");
+    }
+
     avm_debug!(
         activation.context.avm2,
         "Event dispatch: {} to {current_target:?}",
@@ -374,6 +378,9 @@ fn dispatch_event_to_target<'gc>(
     let dispatch_list = dispatcher.get_slot(slots::DISPATCH_LIST).as_object();
 
     if dispatch_list.is_none() {
+        if event.event().event_type().as_wstr() == b"mouseWheel" {
+            tracing::error!("TEST_DEBUGGING dispatch, no dispatch list");
+        }
         // Objects with no dispatch list act as if they had an empty one
         return Ok(());
     }
@@ -402,6 +409,12 @@ fn dispatch_event_to_target<'gc>(
     }
 
     for handler in handlers.iter() {
+        if event.event().event_type().as_wstr() == b"mouseWheel" {
+            tracing::error!(
+                "TEST_DEBUGGING dispatch, handlers {}",
+                event.event().is_propagation_stopped_immediately()
+            );
+        }
         if event.event().is_propagation_stopped_immediately() {
             break;
         }
@@ -451,6 +464,10 @@ pub fn dispatch_event<'gc>(
     drop(evtmut);
 
     for ancestor in ancestor_list.iter().rev() {
+        if event.event().event_type().as_wstr() == b"mouseWheel" {
+            tracing::error!("TEST_DEBUGGING dispatch, ancestor {:?}", &ancestor);
+        }
+
         if event.event().is_propagation_stopped() {
             break;
         }

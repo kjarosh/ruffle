@@ -584,6 +584,7 @@ impl RuffleHandle {
                 "pointerenter",
                 false,
                 move |_js_event: PointerEvent| {
+                    tracing::error!("TEST_DEBUGGING pointerenter {}", _js_event.is_trusted());
                     let _ = ruffle.with_instance(move |instance| {
                         let _ = instance.with_core_mut(|core| {
                             core.set_mouse_in_stage(true);
@@ -598,6 +599,7 @@ impl RuffleHandle {
                 "pointerleave",
                 false,
                 move |_js_event: PointerEvent| {
+                    tracing::error!("TEST_DEBUGGING pointerleave {}", _js_event.is_trusted());
                     let _ = ruffle.with_instance(move |instance| {
                         let _ = instance.with_core_mut(|core| {
                             core.set_mouse_in_stage(false);

@@ -1058,6 +1058,7 @@ impl Player {
         let Some(event) = self.input.process_event(event) else {
             return false;
         };
+        tracing::error!("TEST_DEBUGGING got player input event {:?}", event);
 
         let changed_mouse_buttons = self
             .input
@@ -1378,6 +1379,12 @@ impl Player {
 
             let is_mouse_moved = prev_mouse_position != self.mouse_position;
 
+            tracing::error!(
+                "TEST_DEBUGGING got mouse event {}, {}, {}",
+                is_mouse_moved,
+                prev_mouse_position,
+                self.mouse_position
+            );
             // This fires button rollover/press events, which should run after the above mouseMove events.
             if self.update_mouse_state(
                 &changed_mouse_buttons,
@@ -1390,6 +1397,10 @@ impl Player {
 
         if let InputEvent::MouseWheel { delta } = &event {
             self.mutate_with_update_context(|context| {
+                tracing::error!(
+                    "TEST_DEBUGGING got MouseWheel event 2: hovered: {:?}",
+                    context.mouse_data.hovered
+                );
                 let target = if let Some(over_object) = context.mouse_data.hovered {
                     if over_object.as_displayobject().movie().is_action_script_3()
                         || !over_object.as_displayobject().avm1_removed()
@@ -1523,21 +1534,26 @@ impl Player {
         let mut new_cursor = self.mouse_cursor;
         let mut mouse_cursor_needs_check = self.mouse_cursor_needs_check;
         let mouse_in_stage = self.mouse_in_stage();
+        tracing::error!("TEST_DEBUGGING mouse in stage: {}", mouse_in_stage);
 
         // Determine the display object the mouse is hovering over.
         // Search through levels from top-to-bottom, returning the first display object that is under the mouse.
         let needs_render = self.mutate_with_update_context(|context| {
+            tracing::error!("TEST_DEBUGGING hover before: {:?}", context.mouse_data.hovered);
             // Objects may be hovered using Tab,
             // skip mouse hover when it's not necessary.
             let mut skip_mouse_hover = !is_mouse_moved
                 && changed_mouse_buttons.is_empty()
                 && context.mouse_data.hovered.is_some();
+            tracing::error!("TEST_DEBUGGING skip hover: {}", skip_mouse_hover);
 
             let new_over_object = if mouse_in_stage {
+                tracing::error!("TEST_DEBUGGING mouse pick: {:?}", context.mouse_position);
                 run_mouse_pick(context, true)
             } else {
                 None
             };
+            tracing::error!("TEST_DEBUGGING new_over_object: {:?}", new_over_object);
             let mut events: smallvec::SmallVec<[(InteractiveObject<'_>, ClipEvent); 2]> =
                 Default::default();
 
@@ -1713,6 +1729,7 @@ impl Player {
                 }
             }
             if !skip_mouse_hover && !new_over_object_updated {
+                tracing::error!("TEST_DEBUGGING new_over_object2: {:?}", new_over_object);
                 context.mouse_data.hovered = new_over_object;
             }
             // Handle presses and releases.
@@ -1851,6 +1868,7 @@ impl Player {
                 refresh
             };
             Self::run_actions(context);
+            tracing::error!("TEST_DEBUGGING hover after: {:?}", context.mouse_data.hovered);
             needs_render
         });
 

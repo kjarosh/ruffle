@@ -20,7 +20,7 @@ async function scroll(
 ) {
     const canvas = await player.shadow$("canvas");
 
-    return await browser.execute(
+    const r = await browser.execute(
         (element, x, y, lines) => {
             const el = element as unknown as HTMLElement;
             el.dispatchEvent(
@@ -42,6 +42,8 @@ async function scroll(
         y,
         lines,
     );
+    console.log("TEST_DEBUGGING scrolled: " + r);
+    return r;
 }
 
 interface TestParams {
@@ -49,6 +51,7 @@ interface TestParams {
     expectedScroll: boolean | null;
 }
 
+for (let i = 0; i < 50; i++) {
 [
     {
         name: "always",
@@ -86,6 +89,7 @@ interface TestParams {
         it("scroll the first clip", async () => {
             const player = await browser.$("#objectElement");
 
+            console.log("TEST_DEBUGGING scroll the first clip");
             expect(await scroll(browser, player, 100, 100, 1)).to.equal(
                 expectedScroll ?? false,
             );
@@ -97,6 +101,7 @@ interface TestParams {
         it("scroll the text field up", async () => {
             const player = await browser.$("#objectElement");
 
+            console.log("TEST_DEBUGGING scroll the text field up");
             expect(await scroll(browser, player, 300, 100, -1)).to.equal(
                 expectedScroll ?? true,
             );
@@ -105,6 +110,7 @@ interface TestParams {
         it("scroll the text field", async () => {
             const player = await browser.$("#objectElement");
 
+            console.log("TEST_DEBUGGING scroll the text field");
             expect(await scroll(browser, player, 300, 100, 2)).to.equal(
                 expectedScroll ?? false,
             );
@@ -113,6 +119,7 @@ interface TestParams {
         it("scroll the text field back up", async () => {
             const player = await browser.$("#objectElement");
 
+            console.log("TEST_DEBUGGING scroll the text field back up");
             expect(await scroll(browser, player, 300, 100, -1)).to.equal(
                 expectedScroll ?? false,
             );
@@ -121,6 +128,7 @@ interface TestParams {
         it("scroll the second clip", async () => {
             const player = await browser.$("#objectElement");
 
+            console.log("TEST_DEBUGGING scroll the second clip");
             expect(await scroll(browser, player, 500, 100, 1)).to.equal(
                 expectedScroll ?? false,
             );
@@ -132,14 +140,17 @@ interface TestParams {
         it("scroll non-interactive content", async () => {
             const player = await browser.$("#objectElement");
 
+            console.log("TEST_DEBUGGING scroll non-interactive content");
             expect(await scroll(browser, player, 700, 100, 1)).to.equal(
                 expectedScroll ?? true,
             );
         });
 
         it("no more traces", async function () {
+            console.log("TEST_DEBUGGING no more traces");
             const player = await browser.$("#objectElement");
             assertNoMoreTraceOutput(browser, player);
         });
     });
 });
+}
