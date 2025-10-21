@@ -20,15 +20,18 @@ async function scroll(
 ) {
     const canvas = await player.shadow$("canvas");
 
-    const r = await browser.execute(
-        (element, x, y, lines) => {
+    await browser.performActions([{
+        type: 'pointer',
+        id: 'mouse',
+        parameters: { pointerType: 'mouse' },
+        actions: [
+            { type: 'pointerMove', duration: 0, origin: canvas, x, y }
+        ]
+    }]);
+
+    const ret = await browser.execute(
+        (element, lines) => {
             const el = element as unknown as HTMLElement;
-            el.dispatchEvent(
-                new PointerEvent("pointermove", {
-                    clientX: x as unknown as number,
-                    clientY: y as unknown as number,
-                }),
-            );
             return el.dispatchEvent(
                 new WheelEvent("wheel", {
                     deltaY: lines as unknown as number,
@@ -38,12 +41,13 @@ async function scroll(
             );
         },
         canvas,
-        x,
-        y,
         lines,
     );
-    console.log("TEST_DEBUGGING scrolled: " + r);
-    return r;
+
+    await browser.releaseActions();
+
+    console.log("TEST_DEBUGGING scrolled: " + ret);
+    return ret;
 }
 
 interface TestParams {
@@ -51,7 +55,7 @@ interface TestParams {
     expectedScroll: boolean | null;
 }
 
-for (let i = 0; i < 50; i++) {
+for (let i = 0; i < 100; i++) {
 [
     {
         name: "always",
