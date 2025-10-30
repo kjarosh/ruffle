@@ -74,7 +74,9 @@ const PROTO_DECLS: StaticDeclarations = declare_static_properties! {
     "filters" => property(mc_getter!(filters), mc_setter!(set_filters); DONT_DELETE | DONT_ENUM | VERSION_8);
     "transform" => property(mc_getter!(transform), mc_setter!(set_transform); DONT_ENUM | VERSION_8);
     "blendMode" => property(mc_getter!(blend_mode), mc_setter!(set_blend_mode); DONT_DELETE | DONT_ENUM | VERSION_8);
+    "forceSmoothing" => property(mc_getter!(force_smoothing); DONT_DELETE | DONT_ENUM | VERSION_8);
     "scale9Grid" => property(mc_getter!(scale_9_grid), mc_setter!(set_scale_9_grid); DONT_DELETE | DONT_ENUM | VERSION_8);
+    "meth" => method(mc_method!(meth); DONT_DELETE | DONT_ENUM | VERSION_8);
     "getURL" => method(mc_method!(get_url); DONT_ENUM | DONT_DELETE);
     "unloadMovie" => method(mc_method!(unload_movie); DONT_ENUM | DONT_DELETE);
     "loadVariables" => method(mc_method!(load_variables); DONT_ENUM | DONT_DELETE);
@@ -88,7 +90,8 @@ const PROTO_DECLS: StaticDeclarations = declare_static_properties! {
     "getBytesTotal" => method(mc_method!(get_bytes_total); DONT_ENUM | DONT_DELETE);
     "getBytesLoaded" => method(mc_method!(get_bytes_loaded); DONT_ENUM | DONT_DELETE);
     "attachAudio" => method(mc_method!(attach_audio); DONT_ENUM | DONT_DELETE | VERSION_6);
-    "getDepth" => method(globals::get_depth; DONT_ENUM | DONT_DELETE | READ_ONLY | VERSION_6);
+    "attachVideo" => method(mc_method!(attach_video); DONT_ENUM | DONT_DELETE | VERSION_6);
+    "getDepth" => method(globals::get_depth; DONT_ENUM | DONT_DELETE | VERSION_6);
     "setMask" => method(mc_method!(set_mask); DONT_ENUM | DONT_DELETE | VERSION_6);
     "play" => method(mc_method!(play); DONT_ENUM | DONT_DELETE);
     "stop" => method(mc_method!(stop); DONT_ENUM | DONT_DELETE);
@@ -115,8 +118,10 @@ const PROTO_DECLS: StaticDeclarations = declare_static_properties! {
     "endFill" => method(mc_method!(end_fill); DONT_ENUM | DONT_DELETE | VERSION_6);
     "clear" => method(mc_method!(clear); DONT_ENUM | DONT_DELETE | VERSION_6);
     "lineGradientStyle" => method(mc_method!(line_gradient_style); DONT_ENUM | DONT_DELETE | VERSION_8);
+    "beginMeshFill" => method(mc_method!(begin_mesh_fill); DONT_ENUM | DONT_DELETE | VERSION_8);
     "beginBitmapFill" => method(mc_method!(begin_bitmap_fill); DONT_ENUM | DONT_DELETE | VERSION_8);
     "createTextField" => method(mc_method!(create_text_field); DONT_ENUM | DONT_DELETE);
+    "getTextSnapshot" => method(mc_method!(get_text_snapshot); DONT_ENUM | DONT_DELETE);
     // NOTE: `focusEnabled` is not a built-in property of MovieClip.
     // NOTE: `tabEnabled` is not a built-in property of MovieClip.
     // NOTE: `tabChildren` is not a built-in property of MovieClip.
@@ -318,6 +323,15 @@ fn attach_audio<'gc>(
         movie_clip.attach_audio(activation.context, None);
     }
 
+    Ok(Value::Undefined)
+}
+
+fn attach_video<'gc>(
+    _movie_clip: MovieClip<'gc>,
+    activation: &mut Activation<'_, 'gc>,
+    _args: &[Value<'gc>],
+) -> Result<Value<'gc>, Error<'gc>> {
+    avm1_stub!(activation, "MovieClip", "attachVideo");
     Ok(Value::Undefined)
 }
 
@@ -1817,4 +1831,39 @@ fn set_tab_index<'gc>(
     };
     this.set_tab_index(value);
     Ok(())
+}
+
+fn get_text_snapshot<'gc>(
+    _movie_clip: MovieClip<'gc>,
+    activation: &mut Activation<'_, 'gc>,
+    _args: &[Value<'gc>],
+) -> Result<Value<'gc>, Error<'gc>> {
+    avm1_stub!(activation, "MovieClip", "getTextSnapshot");
+    Ok(Value::Undefined)
+}
+
+fn force_smoothing<'gc>(
+    _movie_clip: MovieClip<'gc>,
+    activation: &mut Activation<'_, 'gc>,
+) -> Result<Value<'gc>, Error<'gc>> {
+    avm1_stub!(activation, "MovieClip", "forceSmoothing");
+    Ok(Value::Undefined)
+}
+
+fn begin_mesh_fill<'gc>(
+    _movie_clip: MovieClip<'gc>,
+    activation: &mut Activation<'_, 'gc>,
+    _args: &[Value<'gc>],
+) -> Result<Value<'gc>, Error<'gc>> {
+    avm1_stub!(activation, "MovieClip", "beginMeshFill");
+    Ok(Value::Undefined)
+}
+
+fn meth<'gc>(
+    _movie_clip: MovieClip<'gc>,
+    activation: &mut Activation<'_, 'gc>,
+    _args: &[Value<'gc>],
+) -> Result<Value<'gc>, Error<'gc>> {
+    avm1_stub!(activation, "MovieClip", "meth");
+    Ok(Value::Undefined)
 }
