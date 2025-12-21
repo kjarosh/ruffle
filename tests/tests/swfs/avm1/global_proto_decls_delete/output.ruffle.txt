@@ -246,6 +246,7 @@ Testing _global.Number
   MIN_VALUE, DONT_DELETE
   MAX_VALUE, DONT_DELETE
   __proto__, DONT_DELETE
+Testing _global.o
 Testing _global.setTimeout
   __proto__, DONT_DELETE
 Testing _global.clearInterval
