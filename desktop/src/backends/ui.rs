@@ -336,7 +336,9 @@ impl UiBackend for DesktopUiBackend {
         register: &mut dyn FnMut(FontDefinition),
     ) -> Vec<FontQuery> {
         #[cfg(feature = "fontconfig")]
-        return fontconfig_sort_device_fonts(query, register);
+        return fontconfig_sort_device_fonts(query, register)
+            .inspect_err(|err| tracing::error!("Cannot sort device fonts: {err}"))
+            .unwrap_or_default();
 
         #[cfg(not(feature = "fontconfig"))]
         return Vec::new();
@@ -441,10 +443,26 @@ fn load_fontdb_font(name: String, face: &FaceInfo) -> Result<FontDefinition<'sta
 }
 
 #[cfg(feature = "fontconfig")]
+#[derive(Debug, thiserror::Error)]
+enum FontconfigError {
+    #[error("Malformed font family")]
+    MalformedFontFamily,
+    #[error("Internal fontconfig error: {0}")]
+    Internal(fontconfig::FontconfigError),
+}
+
+#[cfg(feature = "fontconfig")]
+impl From<fontconfig::FontconfigError> for FontconfigError {
+    fn from(value: fontconfig::FontconfigError) -> Self {
+        FontconfigError::Internal(value)
+    }
+}
+
+#[cfg(feature = "fontconfig")]
 fn fontconfig_sort_device_fonts(
     query: &FontQuery,
     register: &mut dyn FnMut(FontDefinition),
-) -> Vec<FontQuery> {
+) -> Result<Vec<FontQuery>, FontconfigError> {
     use fontconfig::{FontFormat, Pattern};
     use std::sync::LazyLock;
 
@@ -452,43 +470,46 @@ fn fontconfig_sort_device_fonts(
         LazyLock::new(fontconfig::Fontconfig::new);
 
     let Some(fc) = FONTCONFIG.as_ref() else {
-        return Vec::new();
+        return Ok(Vec::new());
     };
 
     let Ok(family) = std::ffi::CString::new(query.name.as_str()) else {
-        tracing::error!("Cannot sort device fonts, null in font family");
-        return Vec::new();
+        return Err(FontconfigError::MalformedFontFamily);
     };
 
-    let mut pattern: Pattern<'static> = Pattern::new(fc);
-    pattern.add_string(fontconfig::FC_FAMILY, family.as_c_str());
+    let mut pattern: Pattern<'static> = Pattern::new(fc)?;
+
+    pattern.add_string(fontconfig::FC_FAMILY, family.as_c_str())?;
 
     if query.is_bold {
-        pattern.add_integer(fontconfig::FC_WEIGHT, fontconfig::FC_WEIGHT_BOLD);
+        pattern.add_integer(fontconfig::FC_WEIGHT, fontconfig::FC_WEIGHT_BOLD)?;
     }
     if query.is_italic {
-        pattern.add_integer(fontconfig::FC_SLANT, fontconfig::FC_SLANT_ITALIC);
+        pattern.add_integer(fontconfig::FC_SLANT, fontconfig::FC_SLANT_ITALIC)?;
     }
 
-    let font_set = pattern.sort_fonts(true);
+    let font_set = pattern.sort_fonts(fontconfig::UnicodeCoverage::Trim)?;
+
     let mut font_queries = Vec::new();
     for font in font_set.iter() {
         let is_ttf = font
             .format()
             .is_ok_and(|f| matches!(f, FontFormat::TrueType));
         if !is_ttf {
-            if let Some(name) = font.name() {
-                tracing::info!("Skipping font '{name}' because it's not a TTF");
+            if let Ok(name) = font.name() {
+                tracing::info!(
+                    "Skipping font '{name}' because it's not a TTF (it doesn't have a name)"
+                );
             }
             continue;
         }
 
         let (
-            Some(name), //
-            Some(filename),
-            Some(index),
-            Some(weight),
-            Some(slant),
+            Ok(name), //
+            Ok(filename),
+            Ok(index),
+            Ok(weight),
+            Ok(slant),
         ) = (
             font.name(),
             font.filename(),
@@ -524,5 +545,6 @@ fn fontconfig_sort_device_fonts(
         let query = FontQuery::new(query.font_type, name.to_string(), is_bold, is_italic);
         font_queries.push(query);
     }
-    font_queries
+
+    Ok(font_queries)
 }

@@ -1879,9 +1879,9 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "fontconfig"
-version = "0.10.2"
+version = "0.11.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "854f6a6479193c392bd820abcd2123b116f01eba7775b6bcfc26494be3285229"
+checksum = "6361835aeab270cb29980fa642ba323e0f6457c9a738a13e3b6c8fbe9ed79ee7"
 dependencies = [
  "yeslogic-fontconfig-sys",
 ]
