@@ -1,6 +1,7 @@
 use crate::backends::{FontRendererKind, TestAudioBackend};
 use crate::environment::{Environment, RenderInterface};
 use crate::options::RenderOptions;
+use ruffle_core::backend::locale::DeterministicLocaleBackend;
 use ruffle_core::tag_utils::SwfMovie;
 use ruffle_core::{PlayerBuilder, PlayerMode, PlayerRuntime};
 use ruffle_render::backend::{RenderBackend, ViewportDimensions};
@@ -20,12 +21,24 @@ pub struct PlayerOptions {
     mode: Option<PlayerMode>,
     with_default_font: bool,
     device_font_renderer: FontRendererKind,
+
+    /// The mock date/time (and timezone) `Date.now()`/`new Date()` should see,
+    /// as an RFC 3339 string, e.g. `"2001-02-03T04:05:06+05:45"`.
+    ///
+    /// Defaults to a fixed mock time if unset.
+    date_time: Option<String>,
 }
 
 impl PlayerOptions {
     pub fn setup(&self, mut player_builder: PlayerBuilder) -> anyhow::Result<PlayerBuilder> {
         if let Some(max_execution_duration) = self.max_execution_duration {
             player_builder = player_builder.with_max_execution_duration(max_execution_duration);
+        }
+
+        if let Some(date_time) = &self.date_time {
+            let date_time = chrono::DateTime::parse_from_rfc3339(date_time)
+                .map_err(|e| anyhow::anyhow!("Invalid `date_time` in test.toml: {e}"))?;
+            player_builder = player_builder.with_locale(DeterministicLocaleBackend::new(date_time));
         }
 
         if let Some(render_options) = &self.with_renderer {

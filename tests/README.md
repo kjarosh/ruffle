@@ -113,6 +113,9 @@ runtime = "AIR"
 # The version of the player to emulate. If not set, it uses the newest one ruffle knows about.
 version = 32
 
+# The custom date/time that is mocked in tests.
+date_time = "2007-02-11T06:32:02+02:00"
+
 # Whether Ruffle's default font should be available.
 # It's not recommended to enable this option, as it will introduce differences
 # in behavior between Ruffle and Flash.
