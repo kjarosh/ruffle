@@ -1,0 +1,18 @@
+test_package = ["tests"]
+test_tool = "nextest"
+additional_cargo_test_args = ["--fail-fast"]
+gitignore = true
+examine_globs = [
+    "core/**/*.rs",
+    "flv/**/*.rs",
+    "render/**/*.rs",
+    "swf/**/*.rs",
+    "tests/**/*.rs",
+    "tools/asc/**/*.rs",
+    "video/**/*.rs",
+    "wstr/**/*.rs",
+]
+exclude_globs = [
+    "core/src/debug_ui/**/*.rs"
+]
+minimum_test_timeout = 800.0

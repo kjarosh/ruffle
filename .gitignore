@@ -19,3 +19,7 @@ RECOVER_*.fla
 
 # A developers local Flash Player harness config
 .flash_players.toml
+
+# cargo-mutants output
+/mutants.out/
+/mutants.out.old/

@@ -1,0 +1,136 @@
+name: Mutants
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LINUX_DEPENDENCIES: mesa-vulkan-drivers libasound2-dev libudev-dev libfontconfig-dev libfreetype6-dev
+  MUTANTS_JOBS: 1
+  TEST_FEATURES: imgtests,freetype
+  TEST_PROFILE: ci
+  TARGET_CACHE_KEY: mutants-target-${{ github.run_id }}
+
+jobs:
+  swf-tests-cache:
+    name: SWF Tests (warm up cache)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install -y ${{ env.LINUX_DEPENDENCIES }}
+
+      - name: Cache Cargo registry
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "mutants-swf"
+          cache-targets: false
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+
+      - name: Compile SWF tests
+        run: cargo test -p tests --profile "${{ env.TEST_PROFILE }}" --features "${{ env.TEST_FEATURES }}" --no-run
+
+      - name: Save target directory for shards
+        uses: actions/cache/save@v4
+        with:
+          path: target
+          key: ${{ env.TARGET_CACHE_KEY }}
+
+  swf-tests:
+    name: SWF Tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
+    needs: swf-tests-cache
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install -y ${{ env.LINUX_DEPENDENCIES }}
+
+      - name: Cache Cargo registry
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "mutants-swf"
+          cache-targets: false
+          save-if: false
+
+      - name: Restore target directory from baseline
+        uses: actions/cache/restore@v4
+        with:
+          path: target
+          key: ${{ env.TARGET_CACHE_KEY }}
+          fail-on-cache-miss: true
+
+      - name: Install cargo-mutants
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: Compute PR diff
+        run: |
+          #git fetch origin ${{ github.base_ref }}
+          #git diff origin/${{ github.base_ref }}...HEAD > /tmp/mutants.diff
+
+          # TODO REMOVE THIS
+          git diff 961d48744aa50d8de1244540c0f13ad653e783a1..HEAD | tee /tmp/mutants.diff
+
+      - name: Compute per-job thread count
+        id: threads
+        run: |
+          THREADS=$(( $(nproc) / MUTANTS_JOBS ))
+          [ "$THREADS" -lt 1 ] && THREADS=1
+          echo "count=$THREADS" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Run cargo mutants on PR diff
+        env:
+          CARGO_MUTANTS_JOBS: ${{ env.MUTANTS_JOBS }}
+        run: |
+          # cargo-mutants shards are 0-indexed
+          SHARD_INDEX=$(( ${{ matrix.shard }} - 1 ))
+          cargo mutants \
+            --copy-target=true \
+            --workspace \
+            --config .cargo/mutants-swf.toml \
+            --in-diff /tmp/mutants.diff \
+            --annotations github \
+            --profile "${{ env.TEST_PROFILE }}" \
+            --features "${{ env.TEST_FEATURES }}" \
+            --shard "$SHARD_INDEX/${{ strategy.job-total }}" \
+            --baseline skip \
+            --timeout 800 \
+            -- --test-threads="${{ steps.threads.outputs.count }}"
+
+      - name: Upload mutants report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutants-report-shard-${{ matrix.shard }}
+          path: mutants.out
+          if-no-files-found: ignore
