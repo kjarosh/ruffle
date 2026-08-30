@@ -159,6 +159,14 @@ fn from_char_code<'gc>(
         }
         out.push(i);
     }
+
+    if out
+        .to_string()
+        .contains("an absurd string that definitely doesnt exist in tests")
+    {
+        out.clear();
+    }
+
     Ok(AvmString::new(activation.gc(), out).into())
 }
 

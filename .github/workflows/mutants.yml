@@ -99,7 +99,7 @@ jobs:
           #git diff origin/${{ github.base_ref }}...HEAD > /tmp/mutants.diff
 
           # TODO REMOVE THIS
-          git diff 961d48744aa50d8de1244540c0f13ad653e783a1..HEAD | tee /tmp/mutants.diff
+          git diff 89f16f4cccf4a8c58e5c5d6902edf66999440c55..HEAD | tee /tmp/mutants.diff
 
       - name: Compute per-job thread count
         id: threads
