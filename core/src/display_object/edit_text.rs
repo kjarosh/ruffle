@@ -1054,7 +1054,10 @@ impl<'gc> EditText<'gc> {
     fn visible_selection(self) -> Option<TextSelection> {
         let selection = self.0.selection.get()?;
         if selection.is_caret() {
-            if self.has_focus() && !self.0.flags.get().contains(EditTextFlag::READ_ONLY) {
+            if self.has_focus()
+                && !self.0.flags.get().contains(EditTextFlag::READ_ONLY)
+                && !selection.blinks_now()
+            {
                 Some(selection)
             } else {
                 None
@@ -1232,19 +1235,19 @@ impl<'gc> EditText<'gc> {
 
         let visible_selection = self.visible_selection();
 
-        let caret = if let LayoutContent::Text { start, end, .. } = &lbox.content() {
-            if let Some(visible_selection) = visible_selection {
-                let text_len = self.0.text_spans.borrow().text().len();
-                if visible_selection.is_caret()
-                    && !self.0.flags.get().contains(EditTextFlag::READ_ONLY)
-                    && visible_selection.start() >= *start
-                    && (visible_selection.end() < *end || *end == text_len)
-                    && !visible_selection.blinks_now()
-                {
-                    Some(visible_selection.start() - start)
-                } else {
-                    None
-                }
+        let caret = if let LayoutContent::Text { start, end, .. } = &lbox.content()
+            && let Some(visible_selection) = visible_selection
+            && visible_selection.is_caret()
+        {
+            let end = if lbox.is_last_in_line() {
+                // Show the caret at the end of the line where a newline or
+                // the very last position are missing a box.
+                *end + 1
+            } else {
+                *end
+            };
+            if visible_selection.start() >= *start && visible_selection.end() < end {
+                Some(visible_selection.start() - start)
             } else {
                 None
             }
