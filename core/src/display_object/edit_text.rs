@@ -1342,6 +1342,7 @@ impl<'gc> EditText<'gc> {
             );
         let pixel_snapping = EditTextPixelSnapping::new(context.stage.quality());
         pixel_snapping.apply(&mut caret);
+        caret.ty -= Twips::HALF_PX;
 
         // We have to draw the caret outside of the text mask.
         render_state.draw_caret_command = Some(RenderCommand::DrawLine {
