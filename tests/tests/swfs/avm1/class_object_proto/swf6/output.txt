@@ -1,0 +1,30 @@
+--- __proto__ of class objects ---
+[object Object]
+[object Object]
+[object Object]
+--- inherited through the chain ---
+function
+function
+function
+[type Function]
+[type Function]
+--- conversions ---
+NaN
+NaN
+false
+false
+false
+false
+false
+false
+--- plain objects are unaffected ---
+[object Object]
+function
+function
+NaN
+false
+false
+--- clearing the version flags ---
+[object Object]
+function
+false

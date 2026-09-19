@@ -43,6 +43,18 @@ const VERSION_MASKS: [u16; 10] = [
     0b0100_0000_0000_0000, // v9
 ];
 
+/// Similar to [`VERSION_MASKS`], but for AVM1 __proto__ resolution.
+const VERSION_MASKS_PROTO: [u16; 7] = [
+    0b0111_1111_1111_1000,
+    0b0111_1111_1111_1000,
+    0b0111_1111_1111_1000,
+    0b0111_1111_1111_1000,
+    0b0111_1111_1111_1000,
+    // SWFv5 and above
+    0b0111_0100_1000_0000, // v5
+    0b0000_0100_0000_0000, // v6
+];
+
 static NEXT_PROPERTY_ID: AtomicU32 = AtomicU32::new(1);
 
 #[derive(Clone, Collect)]
@@ -145,6 +157,17 @@ impl<'gc> Property<'gc> {
     /// If `false`, the property should be returned as `undefined`.
     pub fn allow_swf_version(&self, swf_version: u8) -> bool {
         let mask = VERSION_MASKS
+            .get(usize::from(swf_version))
+            .copied()
+            .unwrap_or_default();
+        (self.attributes.bits() & mask) == 0
+    }
+
+    /// Checks if this `__proto__` property can be used as a prototype link in the
+    /// given SWF version. If `false`, the object has no proto at all: the link is
+    /// severed and `__proto__` reads as `undefined`.
+    pub fn allow_swf_version_as_proto(&self, swf_version: u8) -> bool {
+        let mask = VERSION_MASKS_PROTO
             .get(usize::from(swf_version))
             .copied()
             .unwrap_or_default();

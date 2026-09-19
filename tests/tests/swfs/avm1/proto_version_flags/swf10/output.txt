@@ -1,0 +1,474 @@
+--- baseline ---
+[object Object]
+marker
+function
+128 plain
+  [object Object],string
+128 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+128 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+128 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1280 plain
+  [object Object],string
+1280 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1280 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1280 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+4096 plain
+  [object Object],string
+4096 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+4096 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+4096 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+8192 plain
+  [object Object],string
+8192 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+8192 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+8192 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+16384 plain
+  [object Object],string
+16384 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+16384 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+16384 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+0 plain
+  [object Object],string
+0 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+0 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+0 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+8 plain
+  [object Object],string
+8 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+8 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+8 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+16 plain
+  [object Object],string
+16 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+16 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+16 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32 plain
+  [object Object],string
+32 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+64 plain
+  [object Object],string
+64 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+64 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+64 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+256 plain
+  [object Object],string
+256 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+256 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+256 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+512 plain
+  [object Object],string
+512 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+512 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+512 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1024 plain
+  [object Object],string
+1024 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1024 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1024 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+2048 plain
+  [object Object],string
+2048 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+2048 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+2048 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32768 plain
+  [object Object],string
+32768 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32768 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32768 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+65535 plain
+  [object Object],string
+65535 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+65535 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+65535 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+640 plain
+  [object Object],string
+640 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+640 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+640 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1152 plain
+  [object Object],string
+1152 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1152 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+1152 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+5376 plain
+  [object Object],string
+5376 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+5376 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+5376 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32640 plain
+  [object Object],string
+32640 proto 1
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32640 proto 2
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+32640 proto 3
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.__proto__.marker:string
+  x.__Proto__.marker:undefined
+  x.marker:marker
+  x.toString:function
+custom proto
+  x.__proto__:object
+  x.__Proto__:undefined
+  x.toString:function
+  x.__proto__:undefined
+  x.__Proto__:undefined
+  x.toString:undefined
+  x.__proto__:undefined
+  x.__Proto__:undefined
+  x.toString:undefined
