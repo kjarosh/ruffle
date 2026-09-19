@@ -1,0 +1,11 @@
+--- fresh object per flag ---
+0 read:object readIsG:string onehop:marker twohop:function
+128 read:object readIsG:string onehop:marker twohop:function
+256 read:object readIsG:string onehop:marker twohop:function
+512 read:object readIsG:string onehop:marker twohop:function
+1024 read:object readIsG:string onehop:marker twohop:function
+2048 read:object readIsG:string onehop:marker twohop:function
+4096 read:object readIsG:string onehop:marker twohop:function
+8192 read:object readIsG:undefined onehop:marker twohop:function
+16384 read:object readIsG:undefined onehop:marker twohop:function
+1280 read:object readIsG:string onehop:marker twohop:function

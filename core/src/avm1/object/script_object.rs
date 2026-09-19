@@ -234,6 +234,15 @@ impl<'gc> Object<'gc> {
         }
 
         let name = name.into();
+
+        // Before SWF7, `__proto__` is the prototype link itself, so it reads back as
+        // whatever the link resolves to, and never falls through to the rest of the
+        // chain. It is also subject to different version attributes than an ordinary
+        // property, hence it can't simply be read out below.
+        if activation.swf_version() < 7 && name == istr!("__proto__") {
+            return Some(self.proto(activation));
+        }
+
         let read = self.0.borrow();
 
         read.properties
@@ -721,12 +730,26 @@ impl<'gc> Object<'gc> {
     /// The proto is another object used to resolve methods across a class of
     /// multiple objects. It should also be accessible as `__proto__` from
     /// `get`.
+    ///
+    /// Before SWF7, `__proto__` *is* the prototype link, so hiding it through SWF
+    /// version attributes severs the chain, and `__proto__` then reads as `undefined`
+    /// because the lookup has nowhere to continue. See
+    /// [`Property::allow_swf_version_as_proto`].
     pub(super) fn proto(self, activation: &mut Activation<'_, 'gc>) -> Value<'gc> {
         if let Some(zuper) = self.as_super_object() {
             return zuper.proto(activation);
         }
 
-        self.get_data(istr!("__proto__"), activation)
+        let name = istr!("__proto__");
+        let case_sensitive = activation.is_case_sensitive();
+        let swf_version = activation.swf_version();
+
+        self.0
+            .borrow()
+            .properties
+            .get(name, case_sensitive)
+            .filter(|property| property.allow_swf_version_as_proto(swf_version))
+            .map(|property| property.data())
             .unwrap_or(Value::Undefined)
     }
 

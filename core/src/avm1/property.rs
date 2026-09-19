@@ -43,6 +43,12 @@ const VERSION_MASKS: [u16; 10] = [
     0b0100_0000_0000_0000, // v9
 ];
 
+/// The only attribute SWFv6 honors when deciding whether `__proto__` can act as a
+/// prototype link, unlike ordinary properties, which use `VERSION_MASKS[6]`.
+///
+/// See `avm1/proto_version_flags` for the behavior this is taken from.
+const PROTO_VERSION_MASK_V6: u16 = 0b0000_0100_0000_0000;
+
 static NEXT_PROPERTY_ID: AtomicU32 = AtomicU32::new(1);
 
 #[derive(Clone, Collect)]
@@ -148,6 +154,23 @@ impl<'gc> Property<'gc> {
             .get(usize::from(swf_version))
             .copied()
             .unwrap_or_default();
+        (self.attributes.bits() & mask) == 0
+    }
+
+    /// Checks if this `__proto__` property can be used as a prototype link in the
+    /// given SWF version. If `false`, the object has no proto at all: the link is
+    /// severed and `__proto__` reads as `undefined`.
+    ///
+    /// Before SWF7, `__proto__` *is* the prototype link, so SWF version attributes
+    /// apply to it; from SWF7 on the link is independent of them. Which attributes
+    /// apply also differs from ordinary properties: SWFv5 uses the same mask as any
+    /// property, but SWFv6 only honors [`PROTO_VERSION_MASK_V6`].
+    pub fn allow_swf_version_as_proto(&self, swf_version: u8) -> bool {
+        let mask = match swf_version {
+            ..=5 => VERSION_MASKS[5],
+            6 => PROTO_VERSION_MASK_V6,
+            _ => 0,
+        };
         (self.attributes.bits() & mask) == 0
     }
 }
