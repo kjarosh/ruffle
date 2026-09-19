@@ -1,0 +1,51 @@
+--- baseline ---
+[object Object]
+marker
+function
+--- single bits on __proto__ ---
+0 read:undefined readIsG:undefined onehop: twohop:undefined
+8 read:undefined readIsG:undefined onehop: twohop:undefined
+16 read:undefined readIsG:undefined onehop: twohop:undefined
+32 read:undefined readIsG:undefined onehop: twohop:undefined
+64 read:undefined readIsG:undefined onehop: twohop:undefined
+128 read:undefined readIsG:undefined onehop: twohop:undefined
+256 read:undefined readIsG:undefined onehop: twohop:undefined
+512 read:undefined readIsG:undefined onehop: twohop:undefined
+1024 read:undefined readIsG:undefined onehop: twohop:undefined
+2048 read:undefined readIsG:undefined onehop: twohop:undefined
+4096 read:undefined readIsG:undefined onehop: twohop:undefined
+8192 read:undefined readIsG:undefined onehop: twohop:undefined
+16384 read:undefined readIsG:undefined onehop: twohop:undefined
+--- the same bits on an ordinary property ---
+8 plain:string
+16 plain:string
+32 plain:string
+64 plain:string
+128 plain:undefined
+256 plain:string
+512 plain:string
+1024 plain:undefined
+2048 plain:string
+4096 plain:undefined
+8192 plain:undefined
+16384 plain:undefined
+--- bit combinations on __proto__ ---
+1280 read:undefined readIsG:undefined onehop: twohop:undefined
+5376 read:undefined readIsG:undefined onehop: twohop:undefined
+32640 read:undefined readIsG:undefined onehop: twohop:undefined
+1152 read:undefined readIsG:undefined onehop: twohop:undefined
+640 read:undefined readIsG:undefined onehop: twohop:undefined
+--- clearing the flags again ---
+128 restored:undefined onehop:
+1024 restored:undefined onehop:
+4096 restored:undefined onehop:
+--- clearing a different bit than was set ---
+4096 minus 128 read:undefined
+4096 minus 4096 read:undefined
+1024 minus 128 read:undefined
+1024 minus 1024 read:undefined
+--- flag on the intermediate link ---
+undefined
+undefined
+undefined
+undefined

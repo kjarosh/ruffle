@@ -1,0 +1,51 @@
+--- baseline ---
+[object Object]
+marker
+function
+--- single bits on __proto__ ---
+0 read:object readIsG:string onehop:marker twohop:function
+8 read:object readIsG:string onehop:marker twohop:function
+16 read:object readIsG:string onehop:marker twohop:function
+32 read:object readIsG:string onehop:marker twohop:function
+64 read:object readIsG:string onehop:marker twohop:function
+128 read:object readIsG:string onehop:marker twohop:function
+256 read:object readIsG:string onehop:marker twohop:function
+512 read:object readIsG:string onehop:marker twohop:function
+1024 read:object readIsG:string onehop:marker twohop:function
+2048 read:object readIsG:string onehop:marker twohop:function
+4096 read:object readIsG:string onehop:marker twohop:function
+8192 read:object readIsG:undefined onehop:marker twohop:function
+16384 read:object readIsG:undefined onehop:marker twohop:function
+--- the same bits on an ordinary property ---
+8 plain:string
+16 plain:string
+32 plain:string
+64 plain:string
+128 plain:string
+256 plain:string
+512 plain:string
+1024 plain:string
+2048 plain:string
+4096 plain:string
+8192 plain:undefined
+16384 plain:undefined
+--- bit combinations on __proto__ ---
+1280 read:object readIsG:string onehop:marker twohop:function
+5376 read:object readIsG:string onehop:marker twohop:function
+32640 read:object readIsG:undefined onehop:marker twohop:function
+1152 read:object readIsG:string onehop:marker twohop:function
+640 read:object readIsG:string onehop:marker twohop:function
+--- clearing the flags again ---
+128 restored:object onehop:marker
+1024 restored:object onehop:marker
+4096 restored:object onehop:marker
+--- clearing a different bit than was set ---
+4096 minus 128 read:object
+4096 minus 4096 read:object
+1024 minus 128 read:object
+1024 minus 1024 read:object
+--- flag on the intermediate link ---
+object
+marker
+function
+function

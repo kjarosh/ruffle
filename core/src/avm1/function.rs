@@ -522,19 +522,27 @@ impl<'gc> FunctionObject<'gc> {
             obj.define_value(context.gc(), name, value, attr);
         };
         let constructor_name = istr!(context, "constructor");
-        let proto_name = istr!(context, "__proto__");
         let prototype_name = istr!(context, "prototype");
+        // As in `build`, `__proto__` is hidden before SWF6.
+        let define_proto = || {
+            obj.define_value(
+                context.gc(),
+                istr!(context, "__proto__"),
+                fn_proto.into(),
+                attr | Attribute::VERSION_6,
+            );
+        };
 
         match order {
             PropertyOrder::PrototypeFirst => {
                 define(prototype_name, prototype.into());
                 define(constructor_name, function_class.into());
-                define(proto_name, fn_proto.into());
+                define_proto();
                 prototype.define_value(context.gc(), constructor_name, Value::Object(obj), attr);
             }
             PropertyOrder::PrototypeLast => {
                 define(constructor_name, function_class.into());
-                define(proto_name, fn_proto.into());
+                define_proto();
                 prototype.define_value(context.gc(), constructor_name, Value::Object(obj), attr);
                 define(prototype_name, prototype.into());
             }
