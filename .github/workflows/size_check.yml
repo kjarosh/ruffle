@@ -1,0 +1,115 @@
+name: Check Size
+
+on:
+  pull_request:
+    branches: [master]
+
+env:
+  SIZE_REPORT_SCRIPT: .github/scripts/size_report.py
+
+jobs:
+  check-size:
+    name: Check Size ${{ matrix.type }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - ref: ${{ github.base_ref }}
+            type: Before
+            id: before
+          - ref: ${{ github.head_ref }}
+            type: After
+            id: after
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+
+      - name: Clone CI config
+        uses: actions/checkout@v4
+        with:
+          path: ci-config
+          sparse-checkout: |
+            .github/linux-dependencies.txt
+            ${{ env.SIZE_REPORT_SCRIPT }}
+          sparse-checkout-cone-mode: false
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+          components: rust-src
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install -y $(cat .github/linux-dependencies.txt)
+
+      # wasm-bindgen-cli version must match wasm-bindgen crate version.
+      # Be sure to update in test_web.yml, release.yml, Cargo.toml,
+      # web/docker/Dockerfile, and web/README.md as well.
+      - name: Install wasm-bindgen
+        run: cargo install --locked wasm-bindgen-cli --version 0.2.127
+
+      # Keep the version number in sync in all workflows,
+      # and in the extension builder Dockerfile!
+      - name: Install wasm-opt
+        uses: sigoden/install-binary@v1
+        with:
+          repo: WebAssembly/binaryen
+          tag: version_129
+          name: wasm-opt
+
+      - name: Install twiggy
+        run: cargo install --locked twiggy
+
+      # Keep in sync with the Linux x86_64 build in release.yml.
+      - name: Build desktop
+        run: cargo build --locked --package ruffle_desktop --profile dist --features jpegxr,fontconfig-dlopen
+
+      - name: Build web
+        env:
+          CARGO_FEATURES: jpegxr
+        working-directory: web
+        run: |
+          npm ci
+          npm run build:dual-wasm-repro
+
+      - name: Record sizes
+        run: python3 ci-config/$SIZE_REPORT_SCRIPT record ${{ matrix.id }}.json
+
+      # Matrix jobs can't expose per-job outputs, so pass the sizes via artifacts.
+      - name: Upload sizes
+        uses: actions/upload-artifact@v7
+        with:
+          name: sizes-${{ matrix.id }}
+          path: ${{ matrix.id }}.json
+
+  report:
+    name: Report sizes
+    needs: [check-size]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Clone CI config
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ${{ env.SIZE_REPORT_SCRIPT }}
+          sparse-checkout-cone-mode: false
+
+      - name: Download sizes
+        uses: actions/download-artifact@v8
+        with:
+          pattern: sizes-*
+          merge-multiple: true
+
+      - name: Compare sizes
+        run: python3 $SIZE_REPORT_SCRIPT compare before.json after.json size-report.md
+
+      - name: Upload report
+        uses: actions/upload-artifact@v7
+        with:
+          name: size-report
+          path: size-report.md

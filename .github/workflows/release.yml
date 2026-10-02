@@ -448,8 +448,8 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       # wasm-bindgen-cli version must match wasm-bindgen crate version.
-      # Be sure to update in test_web.yml, Cargo.toml, web/docker/Dockerfile,
-      # and web/README.md as well.
+      # Be sure to update in test_web.yml, size_check.yml, Cargo.toml,
+      # web/docker/Dockerfile, and web/README.md as well.
       - name: Install wasm-bindgen
         run: cargo install --locked wasm-bindgen-cli --version 0.2.127
 
